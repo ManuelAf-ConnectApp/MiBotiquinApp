@@ -1,0 +1,60 @@
+package com.connectapp.commonresources
+
+import com.connectapp.commonresources.resources.Res
+import com.connectapp.commonresources.resources.*
+
+
+val settings_section_account = Res.string.settings_section_account
+val settings_item_personal_info = Res.string.settings_item_personal_info
+val settings_item_security = Res.string.settings_item_security
+val settings_section_preferences = Res.string.settings_section_preferences
+val settings_item_notifications = Res.string.settings_item_notifications
+val settings_item_dark_mode = Res.string.settings_item_dark_mode
+val settings_section_more = Res.string.settings_section_more
+val settings_item_about = Res.string.settings_item_about
+val settings_item_version = Res.string.settings_item_version
+val settings_item_privacy = Res.string.settings_item_privacy
+val logout = Res.string.logout
+val edit_profile = Res.string.edit_profile
+val go = Res.string.go
+val home_projects_title = Res.string.home_projects_title
+val home_projects_subtitle = Res.string.home_projects_subtitle
+val home_tasks_title = Res.string.home_tasks_title
+val home_tasks_subtitle = Res.string.home_tasks_subtitle
+val home_messages_title = Res.string.home_messages_title
+val home_messages_subtitle = Res.string.home_messages_subtitle
+val settings = Res.string.settings
+val home_settings_subtitle = Res.string.home_settings_subtitle
+val home_welcome_title = Res.string.home_welcome_title
+val home_welcome_subtitle = Res.string.home_welcome_subtitle
+val app_name_full = Res.string.app_name_full
+val forgot_password_title = Res.string.forgot_password_title
+val forgot_password_instruction = Res.string.forgot_password_instruction
+val label_email = Res.string.label_email
+val forgot_password_success = Res.string.forgot_password_success
+val button_send_reset_link = Res.string.button_send_reset_link
+val button_back_to_login = Res.string.button_back_to_login
+val back = Res.string.back
+val menu = Res.string.menu
+val notifications = Res.string.notifications
+val nav_home = Res.string.nav_home
+val nav_profile = Res.string.nav_profile
+val nav_settings = Res.string.nav_settings
+val register_title = Res.string.register_title
+val label_full_name = Res.string.label_full_name
+val label_password = Res.string.label_password
+val label_confirm_password = Res.string.label_confirm_password
+val button_register = Res.string.button_register
+val register_already_account = Res.string.register_already_account
+val label_name = Res.string.label_name
+val label_phone = Res.string.label_phone
+val error_user_not_found = Res.string.error_user_not_found
+val main_title = Res.string.main_title
+val login_title = Res.string.login_title
+val login_subtitle = Res.string.login_subtitle
+val placeholder_email = Res.string.placeholder_email
+val content_desc_toggle_password = Res.string.content_desc_toggle_password
+val login_forgot_password = Res.string.login_forgot_password
+val button_login = Res.string.button_login
+val login_no_account = Res.string.login_no_account
+val login_register_now = Res.string.login_register_now
