@@ -2,6 +2,17 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.androidLint)
+    alias(libs.plugins.androidxRoom)
+    alias(libs.plugins.ksp)
+
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+ksp {
+    arg("room.generateKotlin", "true")
 }
 
 kotlin {
@@ -54,8 +65,13 @@ kotlin {
                 // Add KMP dependencies here
 
                 implementation(libs.kotlinx.serialization.json)
+                api(libs.androidx.room.runtime)
+                api(libs.androidx.sqlite.bundled)
+
                 // Add layer dependencies here
                 implementation(projects.domain)
+
+
             }
         }
 
@@ -67,6 +83,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.core)
                 // Add Android-specific dependencies here. Note that this source set depends on
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.
@@ -92,4 +109,13 @@ kotlin {
         }
     }
 
+}
+dependencies {
+    // KSP necesita procesar las fuentes de Android para generar "AppDatabase_Impl"
+    add("kspAndroid", libs.androidx.room.compiler)
+
+    // KSP también procesará las fuentes comunes y de iOS
+    add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }

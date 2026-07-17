@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class ProfileViewModel : ViewModel() {
 
@@ -62,8 +63,9 @@ class ProfileViewModel : ViewModel() {
         _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             // Simulate API call
-            delay(1500)
+            delay(1500.milliseconds)
             val dummyUser = User(
+                id = "1",
                 firstName = "John",
                 lastName = "Doe",
                 email = "john.doe@example.com",
@@ -82,7 +84,7 @@ class ProfileViewModel : ViewModel() {
         _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             // Simulate logout
-            delay(1000)
+            delay(1000.milliseconds)
             _state.update { it.copy(isLoading = false) }
             _effect.emit(ProfileEffect.NavigateToLogin)
         }

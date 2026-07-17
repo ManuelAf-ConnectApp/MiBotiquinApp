@@ -2,7 +2,10 @@ package com.connectapp.presentation.forgot_password
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.connectapp.commonresources.*
 import com.connectapp.domain.usecase.ForgotPasswordUseCase
+import com.connectapp.presentation.util.UiText
+import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,7 +35,7 @@ class ForgotPasswordViewModel(
 
     private fun sendEmail() {
         if (_state.value.email.isBlank()) {
-            _state.update { it.copy(errorMessage = "Email cannot be empty") }
+            _state.update { it.copy(errorMessage = UiText.StringRes(error_empty_email)) }
             return
         }
 
@@ -44,7 +47,7 @@ class ForgotPasswordViewModel(
                     _state.update { it.copy(isLoading = false, isEmailSent = true) }
                 }
                 .onFailure { error ->
-                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    _state.update { it.copy(isLoading = false, errorMessage = error.asUiText()) }
                 }
         }
     }

@@ -7,4 +7,6 @@ sealed interface LoginIntent {
     object RegisterClicked : LoginIntent
 
     object TogglePasswordVisibility: LoginIntent
+
+    object NavigateToForgotPassword : LoginIntent
 }

@@ -2,6 +2,8 @@ package com.connectapp.presentation.home
 
 
 import com.connectapp.commonresources.*
+import com.connectapp.domain.model.Medication
+import com.connectapp.domain.model.User
 import org.jetbrains.compose.resources.StringResource
 
 
@@ -16,7 +18,19 @@ val dashboardItems = listOf(
 
 
 data class HomeState(
-    val items: List<DashboardItem> = dashboardItems,
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
+    val medications: List<Medication>,
+    val items: List<DashboardItem>,
+    val user: User?,
+    val isLoading: Boolean,
+    val error: String?
+) {
+    companion object {
+        val EMPTY_DATA = HomeState(
+            medications = emptyList(),
+            items = dashboardItems,
+            user = null,
+            isLoading = false,
+            error = null
+        )
+    }
+}

@@ -41,6 +41,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
 
 
             // Acceso a capas del proyecto
@@ -63,11 +65,15 @@ kotlin {
 }
 
 android {
-    namespace = "com.connectapp.cleanarch"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    namespace = "com.connectapp.controlpharmaapp"
+    compileSdk {
+        version = release(libs.versions.android.compileSdk.get().toInt()) {
+            minorApiLevel = libs.versions.android.minorApiLevel.get().toInt()
+        }
+    }
 
     defaultConfig {
-        applicationId = "com.connectapp.cleanarch"
+        applicationId = "com.connectapp.controlpharmaapp"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -80,7 +86,12 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {

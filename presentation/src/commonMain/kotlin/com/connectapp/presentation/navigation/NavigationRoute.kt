@@ -1,6 +1,7 @@
 package com.connectapp.presentation.navigation
 
 
+import com.connectapp.domain.model.User
 import kotlinx.serialization.Serializable
 
 sealed interface NavigationRoute {
@@ -8,7 +9,7 @@ sealed interface NavigationRoute {
     data object SplashRoute : NavigationRoute
 
     @Serializable
-    data object HomeRoute : NavigationRoute
+    data class HomeRoute(val user: User? = null) : NavigationRoute
 
     @Serializable
     data object LoginRoute : NavigationRoute
@@ -22,9 +23,10 @@ sealed interface NavigationRoute {
     data object SettingsRoute : NavigationRoute
 
     data object ProfileRoute : NavigationRoute
+    data class MedicationRoute(val user: User? = null) : NavigationRoute
 
     val showBackButton: Boolean get() = this !is HomeRoute
     val showTopBar: Boolean get() = this !is SplashRoute && this !is LoginRoute
     val showBottomBar: Boolean
-        get() = this !is SplashRoute && this !is LoginRoute && this !is RegisterRoute && this !is ForgotPasswordRoute
+        get() = this !is SplashRoute && this !is LoginRoute && this !is RegisterRoute && this !is ForgotPasswordRoute && this !is MedicationRoute
 }

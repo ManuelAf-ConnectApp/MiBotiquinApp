@@ -1,6 +1,7 @@
 package com.connectapp.data.interceptor
 
 import com.connectapp.data.datasource.AuthLocalDataSource
+import com.connectapp.domain.model.AppError
 
 interface NetworkInterceptor {
     fun getHeaders(): Map<String, String>
@@ -26,10 +27,16 @@ class AuthInterceptor(
         return try {
             Result.success(call())
         } catch (e: Exception) {
-            // In the future, Ktor exceptions or exceptions from other libraries can be mapped
-            // to domain errors here
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            
+            // Map exceptions to domain AppError
+            val appError = when (e) {
+                // Example of future mapping for network libraries:
+                // is KtorException -> AppError.NetworkError(e.message)
+                else -> AppError.UnknownError(e.message)
+            }
 
-            Result.failure(e)
+            Result.failure(appError)
         }
     }
 }

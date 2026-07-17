@@ -2,7 +2,11 @@ package com.connectapp.presentation.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.connectapp.commonresources.*
 import com.connectapp.domain.usecase.LoginUseCase
+import com.connectapp.domain.validator.FormValidator
+import com.connectapp.presentation.util.UiText
+import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,9 +16,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val formValidator: FormValidator
 ) : ViewModel() {
 
     private val _state: MutableStateFlow<LoginState> = MutableStateFlow(LoginState())
@@ -34,7 +40,7 @@ class LoginViewModel(
                 )
             }
 
-            delay(2_000)
+            delay(2_000.milliseconds)
 
             _state.update {
                 it.copy(
@@ -57,15 +63,11 @@ class LoginViewModel(
     private fun reduce(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.EmailChanged -> {
-                _state.update {
-                    it.copy(email = intent.email)
-                }
+                onEmailChanged(intent.email)
             }
 
             is LoginIntent.PasswordChanged -> {
-                _state.update {
-                    it.copy(password = intent.password)
-                }
+                onPasswordChanged(intent.password)
             }
 
             LoginIntent.LoginClicked -> {
@@ -77,30 +79,67 @@ class LoginViewModel(
             }
 
             LoginIntent.TogglePasswordVisibility -> {
-                _state.update {
-                    it.copy(isPasswordVisible = !it.isPasswordVisible)
-                }
+                onTogglePasswordVisibility()
+            }
+
+            LoginIntent.NavigateToForgotPassword -> {
+                emitEffect(LoginEffect.NavigateToForgotPassword)
             }
         }
     }
 
-    private fun login() {
+    private fun onEmailChanged(email: String) {
         _state.update {
-            it.copy(isLoading = true)
+            it.copy(email = email)
+        }
+    }
+
+    private fun onPasswordChanged(password: String) {
+        _state.update {
+            it.copy(password = password)
+        }
+    }
+
+    private fun onTogglePasswordVisibility() {
+        _state.update {
+            it.copy(isPasswordVisible = !it.isPasswordVisible)
+        }
+    }
+
+    private fun login() {
+        val email = state.value.email
+        if (!formValidator.isValidEmail(email)) {
+            _state.update { it.copy(errorMessage = UiText.StringRes(error_invalid_email)) }
+            return
+        }
+
+        val password = state.value.password
+        if (!formValidator.isValidPassword(password)) {
+            _state.update { it.copy(errorMessage = UiText.StringRes(error_invalid_password)) }
+            return
+        }
+
+
+        _state.update {
+            it.copy(isLoading = true, errorMessage = null)
         }
         viewModelScope.launch {
             loginUseCase(state.value.email, state.value.password)
-                .onSuccess {
+                .onSuccess { user ->
                     _state.update {
                         it.copy(isLoading = false, isLoggedIn = true)
                     }
-                    emitEffect(LoginEffect.NavigateToHome)
-                }.onFailure {
+                    emitEffect(LoginEffect.NavigateToHome(user = user))
+                }.onFailure { exception ->
                     _state.update {
-                        it.copy(isLoading = false, errorMessage = it.errorMessage)
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = exception.asUiText()
+                        )
                     }
                 }
         }
     }
+
 
 }

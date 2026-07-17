@@ -1,5 +1,7 @@
 package com.connectapp.presentation.register
 
+import com.connectapp.presentation.util.UiText
+
 data class RegisterState(
     val name: String = "",
     val email: String = "",
@@ -7,5 +9,5 @@ data class RegisterState(
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
     val isRegistered: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: UiText? = null
 )

@@ -16,6 +16,7 @@ import com.connectapp.presentation.MainViewModel
 import com.connectapp.presentation.forgot_password.ForgotPasswordScreen
 import com.connectapp.presentation.home.HomeScreen
 import com.connectapp.presentation.login.LoginScreen
+import com.connectapp.presentation.medication.MedicationScreen
 import com.connectapp.presentation.profile.ProfileScreen
 import com.connectapp.presentation.register.RegisterScreen
 import com.connectapp.presentation.settings.SettingsScreen
@@ -34,7 +35,7 @@ fun NavigationScreen(
     LaunchedEffect(navState.route) {
         val newRoute = navState.route
         if (backStack.lastOrNull() != newRoute) {
-            if (newRoute == NavigationRoute.HomeRoute || newRoute == NavigationRoute.SplashRoute) {
+            if (newRoute is NavigationRoute.HomeRoute || newRoute == NavigationRoute.SplashRoute) {
                 backStack.clear()
                 backStack.add(newRoute)
             } else {
@@ -57,9 +58,14 @@ fun NavigationScreen(
             when (key) {
                 is NavigationRoute.SplashRoute -> {
                     NavEntry(key = key) {
-                        SplashScreen {
-                            viewModel.updateNavigationState(NavigationRoute.LoginRoute)
-                        }
+                        SplashScreen(
+                            onNavigateToLogin = {
+                                viewModel.updateNavigationState(NavigationRoute.LoginRoute)
+                            },
+                            onNavigateToHome = { user ->
+                                viewModel.updateNavigationState(NavigationRoute.HomeRoute(user))
+                            }
+                        )
                     }
                 }
 
@@ -73,8 +79,8 @@ fun NavigationScreen(
                             onNavigateToForgotPassword = {
                                 viewModel.updateNavigationState(NavigationRoute.ForgotPasswordRoute)
                             },
-                            onNavigateToHome = {
-                                viewModel.updateNavigationState(NavigationRoute.HomeRoute)
+                            onNavigateToHome = { user ->
+                                viewModel.updateNavigationState(NavigationRoute.HomeRoute(user))
                             }
                         )
                     }
@@ -87,8 +93,8 @@ fun NavigationScreen(
                             onNavigateBack = {
                                 viewModel.updateNavigationState(NavigationRoute.LoginRoute)
                             },
-                            onNavigateToHome = {
-                                viewModel.updateNavigationState(NavigationRoute.HomeRoute)
+                            onNavigateToHome = { user ->
+                                viewModel.updateNavigationState(NavigationRoute.HomeRoute(user))
                             }
                         )
                     }
@@ -107,18 +113,40 @@ fun NavigationScreen(
 
                 is NavigationRoute.HomeRoute -> {
                     NavEntry(key = key) {
-                        HomeScreen(
-                            modifier = modifier,
-                            onShowToast = { item ->
-                                viewModel.showSnackBar(
-                                    message = "You clicked on ${item.title}",
-                                    actionLabel = "Close",
-                                    onAction = {
+                        key.user?.let { user ->
+                            HomeScreen(
+                                modifier = modifier,
+                                user = user,
+                                onShowToast = { item ->
+                                    viewModel.showSnackBar(
+                                        message = "You clicked on ${item.title}",
+                                        actionLabel = "Close",
+                                        onAction = {
 
-                                    }
-                                )
-                            }
-                        )
+                                        }
+                                    )
+                                },
+                                onNavigateToAddMedication = {
+                                    viewModel.updateNavigationState(NavigationRoute.MedicationRoute(user))
+                                }
+                            )
+                        }
+
+                    }
+                }
+
+                is NavigationRoute.MedicationRoute -> {
+                    NavEntry(key = key) {
+                        key.user?.let { user ->
+                            MedicationScreen(
+                                modifier = modifier,
+                                user = user,
+                                onNavigateBack = {
+                                    viewModel.onBack()
+                                }
+                            )
+                        }
+
                     }
                 }
 

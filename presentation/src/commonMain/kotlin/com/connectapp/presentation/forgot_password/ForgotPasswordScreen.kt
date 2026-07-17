@@ -1,6 +1,9 @@
 package com.connectapp.presentation.forgot_password
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,6 +11,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.stringResource
@@ -33,51 +38,89 @@ fun ForgotPasswordScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = stringResource(forgot_password_title), style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(64.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(forgot_password_title),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = stringResource(forgot_password_instruction),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        TextField(
+        OutlinedTextField(
             value = state.email,
             onValueChange = { onIntent(ForgotPasswordIntent.EmailChanged(it)) },
             label = { Text(stringResource(label_email)) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         if (state.isLoading) {
             CircularProgressIndicator()
         } else if (state.isEmailSent) {
-            Text(
-                text = stringResource(forgot_password_success),
-                color = MaterialTheme.colorScheme.primary
-            )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(forgot_password_success),
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
         } else {
             Button(
                 onClick = { onIntent(ForgotPasswordIntent.SendEmailClicked) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text(stringResource(button_send_reset_link))
+                Text(
+                    stringResource(button_send_reset_link),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
 
         state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = it.asString(),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
-        TextButton(onClick = { onIntent(ForgotPasswordIntent.BackToLoginClicked) }) {
+        Spacer(modifier = Modifier.weight(1f))
+
+        TextButton(
+            onClick = { onIntent(ForgotPasswordIntent.BackToLoginClicked) },
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
             Text(stringResource(button_back_to_login))
         }
     }

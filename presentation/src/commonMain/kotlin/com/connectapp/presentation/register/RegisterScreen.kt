@@ -1,12 +1,17 @@
 package com.connectapp.presentation.register
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
@@ -17,82 +22,133 @@ import org.koin.compose.viewmodel.koinViewModel
 fun RegisterScreen(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: (com.connectapp.domain.model.User) -> Unit
 ) {
     val viewModel: RegisterViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val onIntent = viewModel::onIntent
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 RegisterEffect.NavigateToLogin -> onNavigateBack()
-                RegisterEffect.NavigateToHome -> onNavigateToHome()
+                is RegisterEffect.NavigateToHome -> onNavigateToHome(effect.user)
             }
         }
     }
 
+    RegisterScreenContent(
+        modifier = modifier,
+        state = state,
+        onIntent = onIntent
+    )
+
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegisterScreenContent(
+    modifier: Modifier = Modifier,
+    state: RegisterState,
+    onIntent: (RegisterIntent) -> Unit
+) {
+
     Column(
         modifier = modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = stringResource(register_title), style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(48.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(register_title),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-        TextField(
+        Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedTextField(
             value = state.name,
-            onValueChange = { viewModel.onIntent(RegisterIntent.NameChanged(it)) },
+            onValueChange = { onIntent(RegisterIntent.NameChanged(it)) },
             label = { Text(stringResource(label_full_name)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = state.email,
-            onValueChange = { viewModel.onIntent(RegisterIntent.EmailChanged(it)) },
-            label = { Text(stringResource(label_email)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = state.password,
-            onValueChange = { viewModel.onIntent(RegisterIntent.PasswordChanged(it)) },
-            label = { Text(stringResource(label_password)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = state.confirmPassword,
-            onValueChange = { viewModel.onIntent(RegisterIntent.ConfirmPasswordChanged(it)) },
-            label = { Text(stringResource(label_confirm_password)) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = state.email,
+            onValueChange = { onIntent(RegisterIntent.EmailChanged(it)) },
+            label = { Text(stringResource(label_email)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = state.password,
+            onValueChange = { onIntent(RegisterIntent.PasswordChanged(it)) },
+            label = { Text(stringResource(label_password)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = state.confirmPassword,
+            onValueChange = { onIntent(RegisterIntent.ConfirmPasswordChanged(it)) },
+            label = { Text(stringResource(label_confirm_password)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         if (state.isLoading) {
             CircularProgressIndicator()
         } else {
             Button(
-                onClick = { viewModel.onIntent(RegisterIntent.RegisterClicked) },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { onIntent(RegisterIntent.RegisterClicked) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text(stringResource(button_register))
+                Text(
+                    stringResource(button_register),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
 
         state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = it.asString(),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
-        TextButton(onClick = { viewModel.onIntent(RegisterIntent.LoginClicked) }) {
+        Spacer(modifier = Modifier.weight(1f))
+
+        TextButton(
+            onClick = { onIntent(RegisterIntent.LoginClicked) },
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
             Text(stringResource(register_already_account))
         }
     }

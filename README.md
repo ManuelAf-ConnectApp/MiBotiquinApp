@@ -1,81 +1,85 @@
-# CleanArch - Kotlin Multiplatform Project
+# Pharma Control App - Kotlin Multiplatform
 
-CleanArch is a **Kotlin Multiplatform (KMP)** project designed with a robust **Clean Architecture** and **MVI (Model-View-Intent)** pattern. It targets both **Android** and **iOS** platforms using **Compose Multiplatform** for a unified UI experience.
+**Pharma Control App** es una aplicación desarrollada con **Kotlin Multiplatform (KMP)** diseñada para ayudar a los usuarios a gestionar sus medicamentos y recordatorios. Está construida siguiendo los principios de **Clean Architecture** y el patrón **MVI (Model-View-Intent)**, orientada a **Android** e **iOS** utilizando **Compose Multiplatform**.
 
-## 🚀 Project Overview
+## 🚀 Descripción del Proyecto
 
-The main goal of this project is to demonstrate a scalable and maintainable architecture for cross-platform mobile development. It leverages the latest technologies in the Kotlin ecosystem to provide a high-quality user experience with a single codebase for most of the logic.
+El objetivo principal de esta aplicación es proporcionar una experiencia unificada para el seguimiento de la medicación, incluyendo horarios de dosis, recordatorios y gestión de inventario. Aprovecha las últimas tecnologías de Kotlin para compartir la lógica de negocio entre plataformas manteniendo una interfaz de usuario de alta calidad y nativa.
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura
 
-The project is divided into several modules following Clean Architecture principles:
+El proyecto sigue los principios de Clean Architecture distribuidos en varios módulos:
 
-### 1. `:domain` (Core Business Logic)
-*   **Pure Kotlin**: Contains no platform-specific code or dependencies on other layers.
-*   **Models**: Defines the data structures used throughout the application (e.g., `User`).
-*   **Repositories**: Interface definitions for data operations.
-*   **Use Cases**: Implementation of specific business rules (e.g., `LoginUseCase`, `RegisterUseCase`).
+### 1. `:domain` (Lógica de Negocio Principal)
+*   **Pure Kotlin**: Sin dependencias específicas de plataforma.
+*   **Modelos**: Entidades de dominio como `User` y `Medication`.
+*   **Repositorios**: Definición de interfaces para operaciones de datos.
+*   **Casos de Uso**: Implementación de reglas de negocio (ej. `SaveMedicationUseCase`, `LoginUseCase`).
 
-### 2. `:data` (Infrastructure)
-*   **Repository Implementations**: Concrete implementations of the interfaces defined in the domain layer.
-*   **Data Sources**: Handles data retrieval from remote (API) or local (Database/Preferences) sources.
-*   **Mappers**: Converts data transfer objects (DTOs) to domain models.
+### 2. `:data` (Infraestructura)
+*   **Implementación de Repositorios**: Implementaciones concretas de las interfaces de dominio.
+*   **Fuentes de Datos**: Lógica para llamadas a API remotas y persistencia local.
+*   **Mappers**: Conversión de datos entre DTOs y modelos de Dominio.
 
-### 3. `:presentation` (UI Logic & State Management)
-*   **MVI Pattern**: Uses `State`, `Intent`, and `Effect` to manage UI logic predictably.
-*   **ViewModels**: Handles the business logic for each screen, interacting with the domain layer.
-*   **Screens**: Composable functions that define the UI for both platforms.
-*   **Components**: Reusable UI elements like `CustomTopBar` and `CustomBottomBar`.
+### 3. `:presentation` (Lógica de UI y Gestión de Estado)
+*   **Patrón MVI**: Gestión de estado predecible mediante `State`, `Intent` y `Effect`.
+*   **ViewModels**: Poseedores de estado que interactúan con la capa de dominio.
+*   **Pantallas**: UI compartida con Composable para ambas plataformas.
+*   **Componentes**: Elementos de UI reutilizables adaptados al contexto de Pharma.
 
-### 4. `:composeApp` (Platform Entry Points)
-*   **Common Main**: Entry point for shared Compose code and Dependency Injection (Koin) setup.
-*   **Android Main**: Android-specific implementation and Activity.
-*   **iOS Main**: iOS-specific implementation and ViewController.
+### 4. `:composeApp` (Puntos de Entrada de Plataforma)
+*   **Common Main**: Configuración compartida de DI (Koin) y flujo principal de la aplicación.
+*   **Android Main**: Actividad y configuración de Android.
+*   **iOS Main**: Punto de entrada de iOS y configuración del ViewController.
 
-## 🛠️ Tech Stack
+### 5. `:commonResources` (Recursos Compartidos)
+*   **Recursos**: Cadenas de texto, imágenes y fuentes compartidas utilizadas en todos los módulos.
+*   **Código Generado**: Acceso a recursos tanto desde Android como desde iOS.
 
-*   **Language**: Kotlin
+## 🛠️ Stack Tecnológico
+
+*   **Lenguaje**: [Kotlin](https://kotlinlang.org/)
 *   **UI Framework**: [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)
-*   **Dependency Injection**: [Koin](https://insert-koin.io/)
-*   **Concurrency**: Kotlin Coroutines & Flow
-*   **Navigation**: Navigation3 / Compose Navigation
-*   **State Management**: MVI (Model-View-Intent)
-*   **Networking/Persistence**: (Ready for Ktor / SQLDelight)
+*   **Inyección de Dependencias**: [Koin](https://insert-koin.io/)
+*   **Persistencia**: [Room (KMP)](https://developer.android.com/kotlin/multiplatform/room)
+*   **Navegación**: [Navigation3](https://developer.android.com/jetpack/compose/navigation)
+*   **Concurrencia**: Kotlin Coroutines & Flow
+*   **Gestión de Estado**: MVI (Model-View-Intent)
+*   **Fecha y Hora**: Kotlinx Datetime
 
-## ✨ Key Features
+## ✨ Características Principales
 
-- [x] **Splash Screen**: Initial loading and navigation logic.
-- [x] **Authentication**:
-    - Login with validation.
-    - User Registration.
-    - Forgot Password flow.
-- [x] **Home Dashboard**: Modern dashboard with categorized information cards.
-- [x] **Settings & Profile**:
-    - User profile overview.
-    - App preferences (Notifications, Dark Mode).
-    - Account security and legal information.
-- [x] **Theming**: Integrated Material 3 design system.
+- [x] **Gestión de Medicamentos**: Añadir y seguir dosis, cantidades y duraciones.
+- [x] **Recordatorios**: Alertas configurables para las horas de las dosis.
+- [x] **Autenticación**: Flujos seguros de Login, Registro y Recuperación de Contraseña.
+- [x] **Panel de Control**: Acceso rápido a los horarios diarios de medicación.
+- [x] **Perfil y Ajustes**: Gestionar preferencias de usuario y seguridad de la cuenta.
+- [x] **UI Moderna**: Sistema de diseño Material 3 con soporte para modo oscuro.
 
-## 🏁 Getting Started
+## 🏁 Primeros Pasos
 
-### Prerequisites
-*   Android Studio Ladybug or later.
-*   Xcode (for iOS development).
-*   Kotlin Multiplatform plugin.
+### Requisitos Previos
+*   Android Studio Ladybug o posterior.
+*   Xcode (para desarrollo iOS).
+*   Plugin de Kotlin Multiplatform.
 
-### Build and Run
+### Construir y Ejecutar
 
 #### Android
-- From Android Studio: Select the `composeApp` run configuration.
-- From Terminal:
+- Desde Android Studio: Selecciona la configuración de ejecución `composeApp`.
+- Desde la Terminal:
   ```shell
   ./gradlew :composeApp:assembleDebug
   ```
 
 #### iOS
-- Open the `iosApp` directory in Xcode and run the project.
-- Or use the `iosApp` run configuration in Android Studio if configured.
+- Abre el directorio `iosApp` en Xcode y ejecuta el proyecto.
+- O utiliza la configuración de ejecución `iosApp` en Android Studio.
 
 ---
 
-*Developed with ❤️ using Kotlin Multiplatform.*
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la Licencia Apache 2.0 - consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+*Desarrollado con ❤️ para una mejor gestión de la salud.*

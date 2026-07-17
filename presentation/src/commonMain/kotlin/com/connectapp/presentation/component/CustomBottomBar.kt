@@ -39,7 +39,7 @@ fun CustomBottomBar(
     // Esto se podría mover a un objeto de configuración si crece mucho.
     val navItems = listOf(
         BottomNavItem(
-            route = NavigationRoute.HomeRoute,
+            route = NavigationRoute.HomeRoute(),
             icon = Icons.Default.Home,
             label = nav_home
         ),

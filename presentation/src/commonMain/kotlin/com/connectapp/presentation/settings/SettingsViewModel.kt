@@ -12,7 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SettingsViewModel : ViewModel() {
+import com.connectapp.domain.usecase.LogoutUseCase
+
+class SettingsViewModel(
+    private val logoutUseCase: LogoutUseCase
+) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state.asStateFlow()
@@ -60,7 +64,7 @@ class SettingsViewModel : ViewModel() {
     private fun logout() {
         _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            // Simulate logout process
+            logoutUseCase()
             _state.update { it.copy(isLoading = false) }
             _effect.emit(SettingsEffect.NavigateToLogin)
         }

@@ -14,8 +14,8 @@ kotlin {
     android {
         namespace = "com.connectapp.commonresources"
         compileSdk {
-            version = release(36){
-                minorApiLevel = 1
+            version = release(libs.versions.android.compileSdk.get().toInt()) {
+                minorApiLevel = libs.versions.android.minorApiLevel.get().toInt()
             }
         }
         minSdk = libs.versions.android.minSdk.get().toInt()

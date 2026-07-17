@@ -5,7 +5,7 @@ import com.connectapp.data.model.UserDto
 
 interface AuthRemoteDataSource {
     suspend fun login(email: String, password: String): Result<UserDto>
-    suspend fun register(name: String, email: String, password: String): Result<Boolean>
+    suspend fun register(name: String, email: String, password: String): Result<UserDto>
     suspend fun forgotPassword(email: String): Result<Unit>
 }
 
@@ -27,9 +27,17 @@ class AuthRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun register(name: String, email: String, password: String): Result<Boolean> {
+    override suspend fun register(name: String, email: String, password: String): Result<UserDto> {
         return networkInterceptor.execute {
-            true
+            UserDto(
+                id = "2",
+                email = email,
+                firstName = name.split(" ").firstOrNull() ?: "Mock",
+                lastName = name.split(" ").getOrNull(1) ?: "User",
+                phone = "987654321",
+                createdAt = "2023-01-01",
+                updatedAt = "2023-01-01"
+            )
         }
     }
 

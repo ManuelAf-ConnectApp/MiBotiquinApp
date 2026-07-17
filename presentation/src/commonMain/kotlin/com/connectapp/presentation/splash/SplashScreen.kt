@@ -3,7 +3,7 @@ package com.connectapp.presentation.splash
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AllInclusive
+import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,7 +21,8 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SplashScreen(
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: (com.connectapp.domain.model.User) -> Unit,
 ) {
     val viewModel: SplashViewModel = koinViewModel()
 
@@ -29,6 +30,7 @@ fun SplashScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 SplashEffect.NavigateToLogin -> onNavigateToLogin()
+                is SplashEffect.NavigateToHome -> onNavigateToHome(effect.user)
             }
         }
     }
@@ -43,7 +45,7 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.AllInclusive,
+                imageVector = Icons.Default.Medication,
                 contentDescription = null,
                 modifier = Modifier.size(100.dp),
                 tint = Color.White

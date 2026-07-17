@@ -8,14 +8,29 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
     private val _navState = MutableStateFlow(NavigationState(route = NavigationRoute.SplashRoute))
     val navState: StateFlow<NavigationState> get() = _navState
 
     private val _snackBarState = MutableStateFlow<SnackBarState?>(null)
     val snackBarState: StateFlow<SnackBarState?> get() = _snackBarState
 
+    private var currentUser: com.connectapp.domain.model.User? = null
+
     fun updateNavigationState(navRoute: NavigationRoute) {
+        when (navRoute) {
+            is NavigationRoute.HomeRoute -> {
+                if (navRoute.user != null) currentUser = navRoute.user
+            }
+            is NavigationRoute.MedicationRoute -> {
+                if (navRoute.user != null) currentUser = navRoute.user
+            }
+            NavigationRoute.LoginRoute -> {
+                currentUser = null
+            }
+            else -> {}
+        }
+
         _navState.update {
             it.copy(route = navRoute)
         }
@@ -30,13 +45,14 @@ class MainViewModel: ViewModel() {
     }
 
     fun onBack() {
-        when(navState.value.route) {
+        when (navState.value.route) {
             NavigationRoute.ForgotPasswordRoute, NavigationRoute.RegisterRoute -> {
                 updateNavigationState(NavigationRoute.LoginRoute)
             }
-           else ->{
-               updateNavigationState(NavigationRoute.HomeRoute)
-           }
+
+            else -> {
+                updateNavigationState(NavigationRoute.HomeRoute(currentUser))
+            }
         }
     }
 }

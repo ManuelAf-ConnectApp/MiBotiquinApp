@@ -2,7 +2,8 @@ package com.connectapp.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.connectapp.domain.usecase.GetUserMedicationByCodUserUseCase
+import com.connectapp.presentation.home.HomeEffect.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -12,18 +13,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val getUserMedicationByCodUserUseCase: GetUserMedicationByCodUserUseCase
+) : ViewModel() {
 
-    private val _state: MutableStateFlow<HomeState> = MutableStateFlow(HomeState())
+    private val _state: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.EMPTY_DATA)
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
     private val _intents = MutableSharedFlow<HomeIntent>()
-    val intents: SharedFlow<HomeIntent> = _intents.asSharedFlow()
+    val intents: SharedFlow<HomeIntent> get() = _intents.asSharedFlow()
 
     private val _effects = MutableSharedFlow<HomeEffect>()
     val effects: SharedFlow<HomeEffect> = _effects.asSharedFlow()
 
     init {
+        loadMedications()
+    }
+
+    private fun loadMedications() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -31,13 +38,34 @@ class HomeViewModel : ViewModel() {
                 )
             }
 
-            // Simulate loading user settings
-            delay(1_500)
+            // Simulate getting the logged user ID. In a real app, this would come from a Session/Auth manager.
+            val codUser = "1"
 
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                )
+            try {
+                getUserMedicationByCodUserUseCase(codUser).onSuccess {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            medications = it.medications
+                        )
+                    }
+                }.onFailure {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = it.error
+                        )
+                    }
+                }
+
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
             }
         }
     }
@@ -50,12 +78,22 @@ class HomeViewModel : ViewModel() {
         when (intent) {
             is HomeIntent.ItemClicked -> {
                 viewModelScope.launch {
-                    _effects.emit(HomeEffect.OnShowToast(intent.item))
+                    _effects.emit(OnShowToast(intent.item))
                 }
             }
 
-            else -> {
-                // Handle other intents if needed
+            HomeIntent.AddMedicationClicked -> {
+                viewModelScope.launch {
+                    _effects.emit(NavigateToAddMedication)
+                }
+            }
+
+            is HomeIntent.InitData -> {
+                _state.update {
+                    it.copy(
+                        user = intent.user
+                    )
+                }
             }
         }
     }
