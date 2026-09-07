@@ -7,10 +7,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import com.connectapp.commonresources.nav_home
-import com.connectapp.commonresources.nav_profile
-import com.connectapp.commonresources.nav_settings
+import com.connectapp.commonresources.*
 import com.connectapp.presentation.navigation.NavigationRoute
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -44,7 +41,7 @@ fun CustomBottomBar(
             label = nav_home
         ),
         BottomNavItem(
-            route = NavigationRoute.ProfileRoute,
+            route = NavigationRoute.ProfileRoute(),
             icon = Icons.Default.Person,
             label = nav_profile
         ),
@@ -57,10 +54,16 @@ fun CustomBottomBar(
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp // Elevación sutil para separar del contenido
+        tonalElevation = Dimen4 // Elevación sutil para separar del contenido
     ) {
         navItems.forEach { item ->
-            val isSelected = currentRoute == item.route
+            // HomeRoute y ProfileRoute llevan el usuario logueado como parámetro, así que no
+            // se pueden comparar por igualdad de valor: se comparan por tipo de ruta.
+            val isSelected = when (item.route) {
+                is NavigationRoute.HomeRoute -> currentRoute is NavigationRoute.HomeRoute
+                is NavigationRoute.ProfileRoute -> currentRoute is NavigationRoute.ProfileRoute
+                else -> currentRoute == item.route
+            }
             
             NavigationBarItem(
                 selected = isSelected,

@@ -10,6 +10,10 @@ import androidx.core.app.NotificationCompat
 import com.connectapp.data.MedicationAlarmReceiver
 import com.connectapp.domain.manager.NotificationManager
 import com.connectapp.domain.model.Medication
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toInstant
 import android.app.NotificationManager as AndroidNetManager
 
 class AndroidNotificationManager(
@@ -64,7 +68,24 @@ class AndroidNotificationManager(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val triggerAtMillis = medication.startDate ?: System.currentTimeMillis()
+        // Cálculo riguroso del tiempo de disparo (Fecha + Hora - Recordatorio)
+        val baseDateMillis = medication.startDate ?: System.currentTimeMillis()
+        val timeZone = TimeZone.currentSystemDefault()
+        
+        val localDateTime = Instant.fromEpochMilliseconds(baseDateMillis)
+            .toLocalDateTime(timeZone)
+            
+        val preciseDateTime = kotlinx.datetime.LocalDateTime(
+            year = localDateTime.year,
+            monthNumber = localDateTime.monthNumber,
+            dayOfMonth = localDateTime.dayOfMonth,
+            hour = medication.startTimeHour,
+            minute = medication.startTimeMinute,
+            second = 0,
+            nanosecond = 0
+        )
+        
+        val triggerAtMillis = preciseDateTime.toInstant(timeZone).toEpochMilliseconds() - (medication.reminderMinutes * 60 * 1000L)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {

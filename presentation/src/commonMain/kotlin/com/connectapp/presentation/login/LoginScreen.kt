@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
 import com.connectapp.domain.model.User
@@ -75,7 +74,7 @@ private fun LoginScreenContent(
         modifier = modifier
             .fillMaxWidth()
             .imePadding()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = Dimen24),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
@@ -91,7 +90,7 @@ private fun LoginScreenContent(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Dimen8))
 
             Text(
                 text = stringResource(login_subtitle),
@@ -99,7 +98,7 @@ private fun LoginScreenContent(
                 color = MaterialTheme.colorScheme.outline
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Dimen32))
 
             OutlinedTextField(
                 value = state.email,
@@ -111,7 +110,7 @@ private fun LoginScreenContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
 
             OutlinedTextField(
                 value = state.password,
@@ -135,6 +134,21 @@ private fun LoginScreenContent(
                 }
             )
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Checkbox(
+                    checked = state.rememberMe,
+                    onCheckedChange = { onIntent(LoginIntent.ToggleRememberMe) }
+                )
+                Text(
+                    text = stringResource(login_keep_session),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.CenterEnd
@@ -146,13 +160,14 @@ private fun LoginScreenContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(Dimen24))
 
             Button(
                 onClick = { onIntent(LoginIntent.LoginClicked) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(Dimen50),
                 shape = MaterialTheme.shapes.medium,
                 enabled = state.isFormValid
             ) {
@@ -160,7 +175,7 @@ private fun LoginScreenContent(
             }
 
             state.errorMessage?.let {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Dimen16))
                 Text(
                     text = it.asString(),
                     color = MaterialTheme.colorScheme.error,
@@ -182,6 +197,6 @@ private fun LoginScreenContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimen16))
     }
 }

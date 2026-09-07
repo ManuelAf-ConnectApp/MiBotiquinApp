@@ -2,7 +2,13 @@ package com.connectapp.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.connectapp.commonresources.default_user_name
+import com.connectapp.commonresources.message_not_available
+import com.connectapp.domain.usecase.GetCurrentUserUseCase
+import com.connectapp.domain.usecase.LogoutUseCase
+import com.connectapp.presentation.notification.NotificationsController
+import com.connectapp.presentation.theme.ThemeController
+import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -11,34 +17,65 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-import com.connectapp.domain.usecase.LogoutUseCase
+import org.jetbrains.compose.resources.getString
 
 class SettingsViewModel(
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val notificationsController: NotificationsController,
+    private val themeController: ThemeController
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(SettingsState())
+    private val _state = MutableStateFlow(SettingsState(
+        notificationsEnabled = notificationsController.notificationsEnabled.value,
+        darkModeEnabled = themeController.isDarkTheme.value
+    ))
     val state: StateFlow<SettingsState> = _state.asStateFlow()
 
     private val _effect = MutableSharedFlow<SettingsEffect>()
     val effect: SharedFlow<SettingsEffect> = _effect.asSharedFlow()
 
     init {
+        loadUserSettings()
+        observeTheme()
+        observeNotifications()
+    }
+
+    private fun observeTheme() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true
-                )
+            themeController.isDarkTheme.collect { isDark ->
+                _state.update { it.copy(darkModeEnabled = isDark) }
             }
+        }
+    }
 
-            // Simulate loading user settings
-            delay(2_000)
+    private fun observeNotifications() {
+        viewModelScope.launch {
+            notificationsController.notificationsEnabled.collect { enabled ->
+                _state.update { it.copy(notificationsEnabled = enabled) }
+            }
+        }
+    }
 
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                )
+    private fun loadUserSettings() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            getCurrentUserUseCase().onSuccess { user ->
+                val userName = user?.let { "${it.firstName} ${it.lastName}" } ?: getString(default_user_name)
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        userName = userName,
+                        userEmail = user?.email ?: ""
+                    )
+                }
+            }.onFailure { exception ->
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.asUiText()
+                    )
+                }
             }
         }
     }
@@ -47,26 +84,47 @@ class SettingsViewModel(
         when (intent) {
             SettingsIntent.LogoutClicked -> logout()
             is SettingsIntent.NotificationsToggled -> {
-                _state.update { it.copy(notificationsEnabled = intent.enabled) }
+                notificationsController.setNotificationsEnabled(intent.enabled)
             }
+
             is SettingsIntent.DarkModeToggled -> {
-                _state.update { it.copy(darkModeEnabled = intent.enabled) }
+                themeController.setDarkTheme(intent.enabled)
             }
+
             SettingsIntent.EditProfileClicked -> {
-                // Handle navigation to edit profile
+                viewModelScope.launch {
+                    _effect.emit(SettingsEffect.NavigateToProfile)
+                }
             }
+
+            SettingsIntent.SecurityClicked -> {
+                viewModelScope.launch {
+                    _effect.emit(SettingsEffect.ShowMessage(getString(message_not_available)))
+                }
+            }
+
             SettingsIntent.PrivacyPolicyClicked -> {
-                // Handle navigation to privacy policy
+                viewModelScope.launch {
+                    _effect.emit(SettingsEffect.ShowMessage(getString(message_not_available)))
+                }
             }
         }
     }
 
     private fun logout() {
-        _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
-            logoutUseCase()
-            _state.update { it.copy(isLoading = false) }
-            _effect.emit(SettingsEffect.NavigateToLogin)
+            logoutUseCase().onSuccess {
+                _state.update { it.copy(isLoading = false) }
+                _effect.emit(SettingsEffect.NavigateToLogin)
+            }.onFailure { exception ->
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.asUiText()
+                    )
+                }
+            }
         }
     }
 }

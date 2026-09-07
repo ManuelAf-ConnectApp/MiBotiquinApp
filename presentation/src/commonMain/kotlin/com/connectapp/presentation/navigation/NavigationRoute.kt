@@ -1,6 +1,7 @@
 package com.connectapp.presentation.navigation
 
 
+import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 import kotlinx.serialization.Serializable
 
@@ -22,8 +23,14 @@ sealed interface NavigationRoute {
 
     data object SettingsRoute : NavigationRoute
 
-    data object ProfileRoute : NavigationRoute
-    data class MedicationRoute(val user: User? = null) : NavigationRoute
+    @Serializable
+    data class ProfileRoute(val user: User? = null) : NavigationRoute
+    
+    @Serializable
+    data class MedicationRoute(
+        val user: User? = null,
+        val medication: Medication? = null
+    ) : NavigationRoute
 
     val showBackButton: Boolean get() = this !is HomeRoute
     val showTopBar: Boolean get() = this !is SplashRoute && this !is LoginRoute

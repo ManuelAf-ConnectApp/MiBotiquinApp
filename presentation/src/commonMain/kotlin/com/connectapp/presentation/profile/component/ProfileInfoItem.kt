@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.connectapp.commonresources.*
 
 @Composable
 internal fun ProfileInfoItem(
@@ -28,7 +28,7 @@ internal fun ProfileInfoItem(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.outline
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(Dimen16))
         Column {
             Text(
                 text = label,

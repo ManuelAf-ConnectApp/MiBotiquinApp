@@ -65,6 +65,7 @@ kotlin {
                 // Add KMP dependencies here
 
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
                 api(libs.androidx.room.runtime)
                 api(libs.androidx.sqlite.bundled)
 

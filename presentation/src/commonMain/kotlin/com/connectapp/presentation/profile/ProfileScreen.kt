@@ -9,9 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
+import com.connectapp.domain.model.User
 import com.connectapp.presentation.profile.component.ProfileInfoItem
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -20,12 +20,18 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
+    user: User?,
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     val viewModel: ProfileViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val onIntent = viewModel::onIntent
+
+    // El usuario de la sesión activa (recibido por navegación) siempre tiene prioridad
+    // sobre el que intenta recuperar el ViewModel de almacenamiento local, que solo
+    // está disponible si el usuario marcó "recordarme" al iniciar sesión.
+    val resolvedState = state.copy(user = user ?: state.user)
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -35,7 +41,7 @@ fun ProfileScreen(
             }
         }
     }
-    if (state.isLoading) {
+    if (resolvedState.isLoading) {
         Box(
             modifier = modifier
                 .fillMaxSize(),
@@ -50,7 +56,7 @@ fun ProfileScreen(
             contentAlignment = Alignment.Center
         ) {
             ProfileScreenContent(
-                state = state,
+                state = resolvedState,
                 onLogout = { onIntent(ProfileIntent.LogoutClicked) }
             )
         }
@@ -66,18 +72,18 @@ private fun ProfileScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(Dimen24),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         state.user?.let { user ->
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(Dimen100),
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Dimen24))
 
             ProfileInfoItem(
                 icon = Icons.Default.Person,
@@ -85,7 +91,7 @@ private fun ProfileScreenContent(
                 value = "${user.firstName} ${user.lastName}"
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
 
             ProfileInfoItem(
                 icon = Icons.Default.Email,
@@ -93,7 +99,7 @@ private fun ProfileScreenContent(
                 value = user.email
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
 
             ProfileInfoItem(
                 icon = Icons.Default.Phone,

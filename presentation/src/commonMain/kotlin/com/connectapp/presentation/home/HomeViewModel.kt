@@ -2,6 +2,7 @@ package com.connectapp.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.connectapp.domain.usecase.DeleteMedicationUseCase
 import com.connectapp.domain.usecase.GetUserMedicationByCodUserUseCase
 import com.connectapp.presentation.home.HomeEffect.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,7 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val getUserMedicationByCodUserUseCase: GetUserMedicationByCodUserUseCase
+    private val getUserMedicationByCodUserUseCase: GetUserMedicationByCodUserUseCase,
+    private val deleteMedicationUseCase: DeleteMedicationUseCase
 ) : ViewModel() {
 
     private val _state: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.EMPTY_DATA)
@@ -26,11 +28,10 @@ class HomeViewModel(
     private val _effects = MutableSharedFlow<HomeEffect>()
     val effects: SharedFlow<HomeEffect> = _effects.asSharedFlow()
 
-    init {
-        loadMedications()
-    }
-
     private fun loadMedications() {
+        val user = state.value.user ?: return
+        val codUser = user.id
+
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -38,22 +39,19 @@ class HomeViewModel(
                 )
             }
 
-            // Simulate getting the logged user ID. In a real app, this would come from a Session/Auth manager.
-            val codUser = "1"
-
             try {
-                getUserMedicationByCodUserUseCase(codUser).onSuccess {
-                    _state.update {
-                        it.copy(
+                getUserMedicationByCodUserUseCase(codUser).onSuccess { medications ->
+                    _state.update { state ->
+                        state.copy(
                             isLoading = false,
-                            medications = it.medications
+                            medications = medications
                         )
                     }
-                }.onFailure {
-                    _state.update {
-                        it.copy(
+                }.onFailure { exception ->
+                    _state.update { state ->
+                        state.copy(
                             isLoading = false,
-                            error = it.error
+                            error = exception.message
                         )
                     }
                 }
@@ -76,15 +74,23 @@ class HomeViewModel(
 
     private fun reduce(intent: HomeIntent) {
         when (intent) {
-            is HomeIntent.ItemClicked -> {
-                viewModelScope.launch {
-                    _effects.emit(OnShowToast(intent.item))
-                }
-            }
-
             HomeIntent.AddMedicationClicked -> {
                 viewModelScope.launch {
                     _effects.emit(NavigateToAddMedication)
+                }
+            }
+
+            is HomeIntent.MedicationClicked -> {
+                viewModelScope.launch {
+                    _effects.emit(NavigateToEditMedication(intent.medication))
+                }
+            }
+
+            is HomeIntent.DeleteMedicationConfirmed -> {
+                viewModelScope.launch {
+                    deleteMedicationUseCase(intent.medication.id).onSuccess {
+                        loadMedications()
+                    }
                 }
             }
 
@@ -94,6 +100,7 @@ class HomeViewModel(
                         user = intent.user
                     )
                 }
+                loadMedications()
             }
         }
     }

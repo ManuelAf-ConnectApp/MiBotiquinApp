@@ -6,7 +6,7 @@ import com.connectapp.domain.repository.AuthRepository
 class LoginUseCase(
     private val repository: AuthRepository,
 ) {
-    suspend operator fun invoke(email: String, password: String): Result<User> {
-        return repository.login(email, password)
+    suspend operator fun invoke(email: String, password: String, rememberMe: Boolean = false): Result<User> {
+        return repository.login(email, password, rememberMe)
     }
 }

@@ -15,23 +15,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.connectapp.commonresources.button_add_medication
-import com.connectapp.commonresources.home_empty_medications
-import com.connectapp.commonresources.home_welcome_subtitle
-import com.connectapp.commonresources.home_welcome_title
+import com.connectapp.commonresources.*
+import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 import com.connectapp.presentation.home.component.MedicationCard
 import org.jetbrains.compose.resources.stringResource
@@ -41,12 +43,14 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     modifier: Modifier = Modifier,
     user: User,
-    onShowToast: (DashboardItem) -> Unit,
     onNavigateToAddMedication: () -> Unit,
+    onNavigateToEditMedication: (Medication) -> Unit,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val onIntent = viewModel::onIntent
+
+    var medicationToDelete by remember { mutableStateOf<Medication?>(null) }
 
     LaunchedEffect(user) {
         viewModel.onIntent(HomeIntent.InitData(user))
@@ -55,11 +59,11 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is HomeEffect.OnShowToast -> {
-                    onShowToast(effect.item)
-                }
                 HomeEffect.NavigateToAddMedication -> {
                     onNavigateToAddMedication()
+                }
+                is HomeEffect.NavigateToEditMedication -> {
+                    onNavigateToEditMedication(effect.medication)
                 }
             }
         }
@@ -73,15 +77,39 @@ fun HomeScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Dimen16)
                 .statusBarsPadding(),
         ) {
             HomeScreenContent(
                 modifier = modifier,
                 state = state,
-                onIntent = onIntent
+                onIntent = onIntent,
+                onDeleteClick = { medicationToDelete = it }
             )
         }
+    }
+
+    medicationToDelete?.let { medication ->
+        AlertDialog(
+            onDismissRequest = { medicationToDelete = null },
+            title = { Text(stringResource(confirm_delete_title)) },
+            text = { Text(stringResource(confirm_delete_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onIntent(HomeIntent.DeleteMedicationConfirmed(medication))
+                        medicationToDelete = null
+                    }
+                ) {
+                    Text(stringResource(go))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { medicationToDelete = null }) {
+                    Text(stringResource(close))
+                }
+            }
+        )
     }
 }
 
@@ -90,27 +118,22 @@ private fun HomeScreenContent(
     modifier: Modifier = Modifier,
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    onDeleteClick: (Medication) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(Dimen12),
     ) {
         item {
+            val userName = state.user?.firstName?.takeIf { it.isNotBlank() }
             Text(
-                text = stringResource(home_welcome_title),
+                text = if (userName != null) stringResource(welcome_back, userName) else stringResource(welcome_back_generic),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = stringResource(home_welcome_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Dimen20))
 
             Button(
                 onClick = { onIntent(HomeIntent.AddMedicationClicked) },
@@ -123,13 +146,22 @@ private fun HomeScreenContent(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(Dimen20)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Dimen8))
                     Text(text = stringResource(button_add_medication))
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
+
+            state.error?.let { error ->
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(Dimen8))
+            }
         }
 
         if (state.medications.isEmpty()) {
@@ -137,7 +169,7 @@ private fun HomeScreenContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 32.dp),
+                        .padding(top = Dimen32),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -148,8 +180,20 @@ private fun HomeScreenContent(
                 }
             }
         } else {
+            item {
+                Text(
+                    text = stringResource(home_medications_count, state.medications.size),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
             items(state.medications) { medication ->
-                MedicationCard(medication = medication)
+                MedicationCard(
+                    medication = medication,
+                    onClick = { onIntent(HomeIntent.MedicationClicked(medication)) },
+                    onDeleteClick = { onDeleteClick(medication) }
+                )
             }
         }
     }

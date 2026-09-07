@@ -5,5 +5,6 @@ sealed interface SettingsIntent {
     data class NotificationsToggled(val enabled: Boolean) : SettingsIntent
     data class DarkModeToggled(val enabled: Boolean) : SettingsIntent
     data object EditProfileClicked : SettingsIntent
+    data object SecurityClicked : SettingsIntent
     data object PrivacyPolicyClicked : SettingsIntent
 }

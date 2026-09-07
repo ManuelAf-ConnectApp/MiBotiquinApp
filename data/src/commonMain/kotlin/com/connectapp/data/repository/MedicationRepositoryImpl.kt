@@ -10,10 +10,11 @@ import com.connectapp.domain.repository.MedicationRepository
 class MedicationRepositoryImpl(
     private val medicationDataSource: MedicationDataSource
 ): MedicationRepository {
-    override suspend fun saveMedication(medication: Medication): Result<Unit> {
+    override suspend fun saveMedication(medication: Medication): Result<Medication> {
         return try {
-            medicationDataSource.saveMedication(medication.toDto())
-            Result.success(Unit)
+            val generatedId = medicationDataSource.saveMedication(medication.toDto())
+            val savedMedication = if (medication.id == 0L) medication.copy(id = generatedId) else medication
+            Result.success(savedMedication)
         } catch (e: Exception) {
             Result.failure(AppError.UnknownError(e.message))
         }
@@ -41,6 +42,15 @@ class MedicationRepositoryImpl(
         return try {
             val medications = medicationDataSource.getAllMedications().map { it.toDomain() }
             Result.success(medications)
+        } catch (e: Exception) {
+            Result.failure(AppError.UnknownError(e.message))
+        }
+    }
+
+    override suspend fun deleteMedication(id: Long): Result<Unit> {
+        return try {
+            medicationDataSource.deleteMedication(id)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(AppError.UnknownError(e.message))
         }

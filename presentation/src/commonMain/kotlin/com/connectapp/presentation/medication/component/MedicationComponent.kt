@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -38,17 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import com.connectapp.commonresources.close
-import com.connectapp.commonresources.go
-import com.connectapp.commonresources.label_doses_per_day
-import com.connectapp.commonresources.label_end_date
-import com.connectapp.commonresources.label_quantity_per_dose
-import com.connectapp.commonresources.label_reminder_time
-import com.connectapp.commonresources.label_start_date
-import com.connectapp.commonresources.label_start_time
-import com.connectapp.commonresources.unit_ml
-import com.connectapp.commonresources.unit_pills
+import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -56,7 +45,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun DosesPerDayDropdown(
     selectedDoses: Int,
-    onDosesChanged: (Int) -> Unit
+    onDosesChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val dosesOptions = (1..10).toList()
@@ -64,7 +54,7 @@ fun DosesPerDayDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         OutlinedTextField(
             value = selectedDoses.toString(),
@@ -99,14 +89,15 @@ fun QuantityInput(
     quantity: String,
     unit: String,
     onQuantityChanged: (String) -> Unit,
-    onUnitChanged: (String) -> Unit
+    onUnitChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val units = listOf(stringResource(unit_pills), stringResource(unit_ml))
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(Dimen8)
     ) {
         OutlinedTextField(
             value = quantity,
@@ -120,12 +111,13 @@ fun QuantityInput(
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.width(120.dp)
+            modifier = Modifier.weight(1f)
         ) {
             OutlinedTextField(
                 value = unit,
                 onValueChange = {},
                 readOnly = true,
+                label = { Text(stringResource(com.connectapp.commonresources.label_unit)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(
@@ -155,7 +147,8 @@ fun QuantityInput(
 @Composable
 fun ReminderTimeDropdown(
     selectedMinutes: Int,
-    onMinutesChanged: (Int) -> Unit
+    onMinutesChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val options = listOf(10, 20, 30, 40, 50)
@@ -163,7 +156,7 @@ fun ReminderTimeDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         OutlinedTextField(
             value = selectedMinutes.toString(),
@@ -197,7 +190,8 @@ fun ReminderTimeDropdown(
 fun StartTimeInput(
     hour: Int,
     minute: Int,
-    onTimeSelected: (Int, Int) -> Unit
+    onTimeSelected: (Int, Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(
@@ -213,7 +207,7 @@ fun StartTimeInput(
         onValueChange = {},
         readOnly = true,
         label = { Text(stringResource(label_start_time)) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         trailingIcon = {
             IconButton(onClick = { showDialog = true }) {
                 Icon(
@@ -244,7 +238,8 @@ fun DateInput(
     label: StringResource,
     selectedDate: Long?,
     onDateSelected: (Long?) -> Unit,
-    selectableDates: SelectableDates = object : SelectableDates {}
+    selectableDates: SelectableDates = object : SelectableDates {},
+    modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
@@ -264,7 +259,7 @@ fun DateInput(
         onValueChange = {},
         readOnly = true,
         label = { Text(stringResource(label)) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         trailingIcon = {
             IconButton(onClick = { showDialog = true }) {
                 Icon(
@@ -284,12 +279,12 @@ fun DateInput(
                     onDateSelected(datePickerState.selectedDateMillis)
                     showDialog = false
                 }) {
-                    Text(stringResource(go))
+                    Text(stringResource(button_accept))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text(stringResource(close))
+                    Text(stringResource(button_cancel))
                 }
             }
         ) {
@@ -308,12 +303,12 @@ fun TimePickerDialog(
         onDismissRequest = onDismiss,
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(close))
+                Text(stringResource(button_cancel))
             }
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(go)) // Using "Go" as "OK" or similar
+                Text(stringResource(button_accept))
             }
         },
         text = {

@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.stringResource
@@ -59,10 +58,10 @@ private fun RegisterScreenContent(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = Dimen24),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(Dimen48))
 
         Text(
             text = stringResource(register_title),
@@ -70,7 +69,7 @@ private fun RegisterScreenContent(
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Dimen32))
 
         OutlinedTextField(
             value = state.name,
@@ -80,7 +79,7 @@ private fun RegisterScreenContent(
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimen16))
 
         OutlinedTextField(
             value = state.email,
@@ -91,7 +90,7 @@ private fun RegisterScreenContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimen16))
 
         OutlinedTextField(
             value = state.password,
@@ -103,7 +102,7 @@ private fun RegisterScreenContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimen16))
 
         OutlinedTextField(
             value = state.confirmPassword,
@@ -115,7 +114,7 @@ private fun RegisterScreenContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Dimen32))
 
         if (state.isLoading) {
             CircularProgressIndicator()
@@ -124,7 +123,7 @@ private fun RegisterScreenContent(
                 onClick = { onIntent(RegisterIntent.RegisterClicked) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(Dimen50),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
@@ -135,7 +134,7 @@ private fun RegisterScreenContent(
         }
 
         state.errorMessage?.let {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
             Text(
                 text = it.asString(),
                 color = MaterialTheme.colorScheme.error,
@@ -147,7 +146,7 @@ private fun RegisterScreenContent(
 
         TextButton(
             onClick = { onIntent(RegisterIntent.LoginClicked) },
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = Dimen16)
         ) {
             Text(stringResource(register_already_account))
         }

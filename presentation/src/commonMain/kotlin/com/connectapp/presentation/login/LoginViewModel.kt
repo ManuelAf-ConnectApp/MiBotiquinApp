@@ -82,6 +82,10 @@ class LoginViewModel(
                 onTogglePasswordVisibility()
             }
 
+            LoginIntent.ToggleRememberMe -> {
+                _state.update { it.copy(rememberMe = !it.rememberMe) }
+            }
+
             LoginIntent.NavigateToForgotPassword -> {
                 emitEffect(LoginEffect.NavigateToForgotPassword)
             }
@@ -124,10 +128,18 @@ class LoginViewModel(
             it.copy(isLoading = true, errorMessage = null)
         }
         viewModelScope.launch {
-            loginUseCase(state.value.email, state.value.password)
-                .onSuccess { user ->
+            loginUseCase(
+                email = state.value.email,
+                password = state.value.password,
+                rememberMe = state.value.rememberMe
+            ).onSuccess { user ->
                     _state.update {
-                        it.copy(isLoading = false, isLoggedIn = true)
+                        it.copy(
+                            isLoading = false,
+                            isLoggedIn = true,
+                            email = "",
+                            password = ""
+                        )
                     }
                     emitEffect(LoginEffect.NavigateToHome(user = user))
                 }.onFailure { exception ->

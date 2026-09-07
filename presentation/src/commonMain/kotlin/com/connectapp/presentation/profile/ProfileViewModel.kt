@@ -1,9 +1,9 @@
 package com.connectapp.presentation.profile
 
+import com.connectapp.domain.usecase.GetCurrentUserUseCase
+import com.connectapp.domain.usecase.LogoutUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.connectapp.domain.model.User
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val logoutUseCase: LogoutUseCase
+) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState())
     val state: StateFlow<ProfileState> = _state.asStateFlow()
@@ -23,22 +25,7 @@ class ProfileViewModel : ViewModel() {
     val effect: SharedFlow<ProfileEffect> = _effect.asSharedFlow()
 
     init {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true
-                )
-            }
-            // Simulate loading user settings
-            delay(1_000)
-
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                )
-            }
-            loadProfile()
-        }
+        loadProfile()
     }
 
     fun onIntent(intent: ProfileIntent) {
@@ -60,33 +47,35 @@ class ProfileViewModel : ViewModel() {
     }
 
     private fun loadProfile() {
-        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            // Simulate API call
-            delay(1500.milliseconds)
-            val dummyUser = User(
-                id = "1",
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@example.com",
-                phone = "+123456789"
-            )
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    user = dummyUser
-                )
-            }
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            getCurrentUserUseCase()
+                .onSuccess { user ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            user = user
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = exception.message
+                        )
+                    }
+                }
         }
     }
 
     private fun logout() {
-        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            // Simulate logout
-            delay(1000.milliseconds)
-            _state.update { it.copy(isLoading = false) }
-            _effect.emit(ProfileEffect.NavigateToLogin)
+            _state.update { it.copy(isLoading = true) }
+            logoutUseCase().onSuccess {
+                _state.update { it.copy(isLoading = false) }
+                _effect.emit(ProfileEffect.NavigateToLogin)
+            }
         }
     }
 }

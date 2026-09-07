@@ -1,10 +1,13 @@
 package com.connectapp.presentation.settings
 
+import com.connectapp.presentation.util.UiText
+
 data class SettingsState(
     val isLoading: Boolean = false,
-    val userName: String = "Android developer",
-    val userEmail: String = "developer@kmp.com",
+    val userName: String = "",
+    val userEmail: String = "",
     val notificationsEnabled: Boolean = true,
     val darkModeEnabled: Boolean = false,
-    val appVersion: String = ""
+    val appVersion: String = "1.0.0",
+    val errorMessage: UiText? = null
 )

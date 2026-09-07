@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -18,6 +19,7 @@ import org.jetbrains.compose.resources.stringResource
 fun CustomTopBar(
     title: String,
     showBackButton: Boolean = false,
+    notificationsEnabled: Boolean = true,
     onNavigationClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
 ) {
@@ -41,7 +43,7 @@ fun CustomTopBar(
             if (!showBackButton) {
                 IconButton(onClick = onNotificationClick) {
                     Icon(
-                        imageVector = Icons.Default.Notifications,
+                        imageVector = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
                         contentDescription = stringResource(notifications)
                     )
                 }

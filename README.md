@@ -35,6 +35,8 @@ El proyecto sigue los principios de Clean Architecture distribuidos en varios m�
 ### 5. `:commonResources` (Recursos Compartidos)
 *   **Recursos**: Cadenas de texto, imágenes y fuentes compartidas utilizadas en todos los módulos.
 *   **Código Generado**: Acceso a recursos tanto desde Android como desde iOS.
+*   **`TokenResources.kt`**: Punto único de acceso a todas las cadenas de texto (`Res.string.*`) usadas por la capa `presentation`; ningún texto de UI debe hardcodearse en los Composables.
+*   **`DimensResources.kt`**: Escala centralizada de valores `Dp` (`Dimen2`…`Dimen120`) usada por la capa `presentation`; ningún `.dp` debe hardcodearse en los Composables.
 
 ## 🛠️ Stack Tecnológico
 
@@ -46,11 +48,13 @@ El proyecto sigue los principios de Clean Architecture distribuidos en varios m�
 *   **Concurrencia**: Kotlin Coroutines & Flow
 *   **Gestión de Estado**: MVI (Model-View-Intent)
 *   **Fecha y Hora**: Kotlinx Datetime
+*   **Recursos**: Compose Resources (`:commonResources`) para cadenas de texto y dimensiones (`Dp`) centralizadas
+*   **Notificaciones**: `AlarmManager` (Android) / `UNUserNotificationCenter` (iOS) tras la abstracción `NotificationManager` del dominio
 
 ## ✨ Características Principales
 
 - [x] **Gestión de Medicamentos**: Añadir y seguir dosis, cantidades y duraciones.
-- [x] **Recordatorios**: Alertas configurables para las horas de las dosis.
+- [x] **Recordatorios**: Notificaciones locales configurables (hora de inicio, dosis/día, aviso previo) implementadas de forma nativa en cada plataforma — `AlarmManager` en Android y `UNUserNotificationCenter` en iOS — a través de la abstracción `domain.manager.NotificationManager`.
 - [x] **Autenticación**: Flujos seguros de Login, Registro y Recuperación de Contraseña.
 - [x] **Panel de Control**: Acceso rápido a los horarios diarios de medicación.
 - [x] **Perfil y Ajustes**: Gestionar preferencias de usuario y seguridad de la cuenta.
@@ -77,9 +81,5 @@ El proyecto sigue los principios de Clean Architecture distribuidos en varios m�
 - O utiliza la configuración de ejecución `iosApp` en Android Studio.
 
 ---
-
-## 📄 Licencia
-
-Este proyecto está licenciado bajo la Licencia Apache 2.0 - consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 *Desarrollado con ❤️ para una mejor gestión de la salud.*
