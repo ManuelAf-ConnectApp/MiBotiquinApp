@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MedicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMedication(medication: MedicationEntity)
+    suspend fun insertMedication(medication: MedicationEntity): Long
 
     @Query("SELECT * FROM medications WHERE id = :id")
     suspend fun getMedicationById(id: Long): MedicationEntity?

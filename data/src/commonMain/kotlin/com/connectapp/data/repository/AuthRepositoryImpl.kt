@@ -15,26 +15,37 @@ class AuthRepositoryImpl(
 ) : AuthRepository {
     override suspend fun login(
         email: String,
-        password: String
+        password: String,
+        rememberMe: Boolean
     ): Result<User> {
         if (authLocalDataSource.getToken() != null) {
-            // Simulate fetching user data from local storage if token exists
-            return Result.success(
-                User(
-                    id = "1",
-                    firstName = "Cached",
-                    lastName = "User",
-                    email = email,
-                    phone = "123456789"
-                )
-            )
+            val user = userDao.getUserOnce()?.toDomain()
+            if (user != null) {
+                return Result.success(user)
+            }
         }
-        /**
-        In this case, you might receive the token instead of the user, since some back-end systems
-        return the user in a second request
-        **/
-        return authRemoteDataSource.login(email, password).map {
-            it.toDomain()
+
+        return authRemoteDataSource.login(email, password).map { userDto ->
+            val userEntity = userDto.toEntity()
+            // La tabla "users" solo debe contener al usuario de la sesión activa
+            // (getUserOnce/getUser leen "LIMIT 1" sin WHERE); si no se limpia antes,
+            // cuentas de logins anteriores (o el usuario semilla) quedan como filas
+            // sueltas y esa lectura puede devolver la fila equivocada.
+            // Si el usuario que inicia sesión ya es el que hay en local, no lo
+            // borramos: "medications" tiene FK a "users" con onDelete=CASCADE, y
+            // reinsertarlo en cada login (sin "recordar sesión") arrastraría sus
+            // medicamentos ya guardados.
+            if (userDao.getUserOnce()?.id != userEntity.id) {
+                userDao.clearUser()
+                userDao.insertUser(userEntity)
+            }
+
+            if (rememberMe) {
+                authLocalDataSource.saveToken("mock_token_${userDto.id}")
+                authLocalDataSource.saveRememberMe(true)
+            }
+            
+            userDto.toDomain()
         }
     }
 
@@ -49,6 +60,7 @@ class AuthRepositoryImpl(
             password = password
         ).map { userDto ->
             val userEntity = userDto.toEntity()
+            userDao.clearUser()
             userDao.insertUser(userEntity)
             userDto.toDomain()
         }
@@ -56,15 +68,8 @@ class AuthRepositoryImpl(
 
     override suspend fun getCurrentUser(): Result<User?> {
         return if (authLocalDataSource.getToken() != null) {
-            Result.success(
-                User(
-                    id = "1",
-                    firstName = "Cached",
-                    lastName = "User",
-                    email = "cached@user.com",
-                    phone = "123456789"
-                )
-            )
+            val user = userDao.getUserOnce()?.toDomain()
+            Result.success(user)
         } else {
             Result.success(null)
         }
@@ -76,6 +81,7 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> {
         authLocalDataSource.clearSession()
+        userDao.clearUser()
         return Result.success(Unit)
     }
 

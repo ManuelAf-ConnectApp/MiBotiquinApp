@@ -8,6 +8,7 @@ data class LoginState(
     val isLoading: Boolean = false,
     val isLoggedIn: Boolean = false,
     val isPasswordVisible: Boolean = false,
+    val rememberMe: Boolean = false,
     val errorMessage: UiText? = null
 ) {
     val isFormValid: Boolean

@@ -8,5 +8,7 @@ sealed interface LoginIntent {
 
     object TogglePasswordVisibility: LoginIntent
 
+    object ToggleRememberMe : LoginIntent
+
     object NavigateToForgotPassword : LoginIntent
 }

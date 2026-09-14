@@ -16,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.main_title
+import com.connectapp.commonresources.notifications_disabled_message
+import com.connectapp.commonresources.notifications_enabled_message
 import com.connectapp.presentation.component.CustomBottomBar
 import com.connectapp.presentation.component.CustomTopBar
 import com.connectapp.presentation.navigation.NavigationScreen
@@ -29,7 +31,11 @@ fun MainScreen(
     val viewModel: MainViewModel = koinViewModel()
     val navState by viewModel.navState.collectAsStateWithLifecycle()
     val snackBarState by viewModel.snackBarState.collectAsStateWithLifecycle()
+    val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    val notificationsEnabledMessage = stringResource(notifications_enabled_message)
+    val notificationsDisabledMessage = stringResource(notifications_disabled_message)
 
     val currentRoute = navState.route
 
@@ -56,11 +62,15 @@ fun MainScreen(
                     CustomTopBar(
                         showBackButton = currentRoute.showBackButton,
                         title = stringResource(main_title),
+                        notificationsEnabled = notificationsEnabled,
                         onNavigationClick = {
                             viewModel.onBack()
                         },
                         onNotificationClick = {
-                            // TODO: Handle notification click
+                            viewModel.toggleNotifications()
+                            viewModel.showSnackBar(
+                                message = if (!notificationsEnabled) notificationsEnabledMessage else notificationsDisabledMessage
+                            )
                         }
                     )
                 }

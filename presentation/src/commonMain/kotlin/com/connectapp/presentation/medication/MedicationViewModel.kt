@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.connectapp.domain.model.Medication
 import com.connectapp.domain.usecase.SaveMedicationUseCase
+import com.connectapp.domain.usecase.SaveNotificationUseCase
+import com.connectapp.presentation.notification.NotificationsController
 import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MedicationViewModel(
-    private val saveMedicationUseCase: SaveMedicationUseCase
+    private val saveMedicationUseCase: SaveMedicationUseCase,
+    private val saveNotificationUseCase: SaveNotificationUseCase,
+    private val notificationsController: NotificationsController
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MedicationState())
@@ -37,6 +41,35 @@ class MedicationViewModel(
         when (intent) {
             is MedicationIntent.OnInitUserData -> {
                 _state.update { it.copy(user = intent.user) }
+            }
+
+            is MedicationIntent.LoadMedication -> {
+                val med = intent.medication
+                _state.update {
+                    it.copy(
+                        id = med.id,
+                        name = med.name,
+                        dosesPerDay = med.dosesPerDay,
+                        quantity = med.quantity.toString(),
+                        quantityUnit = med.quantityUnit,
+                        durationDays = med.durationDays.toString(),
+                        startDate = med.startDate,
+                        endDate = med.endDate,
+                        reminderMinutes = med.reminderMinutes,
+                        startTimeHour = med.startTimeHour,
+                        startTimeMinute = med.startTimeMinute
+                    )
+                }
+            }
+
+            MedicationIntent.ClearMedication -> {
+                _state.update {
+                    MedicationState(user = it.user)
+                }
+            }
+
+            is MedicationIntent.NameChanged -> {
+                _state.update { it.copy(name = intent.name) }
             }
 
             is MedicationIntent.DosesPerDayChanged -> {
@@ -118,7 +151,10 @@ class MedicationViewModel(
                 viewModelScope.launch {
                     _state.update { it.copy(isLoading = true, errorMessage = null) }
                     saveMedicationUseCase(medication)
-                        .onSuccess {
+                        .onSuccess { savedMedication ->
+                            if (notificationsController.notificationsEnabled.value) {
+                                saveNotificationUseCase(savedMedication)
+                            }
                             _state.update { it.copy(isLoading = false) }
                             emitEffect(MedicationEffect.NavigateBack)
                         }
@@ -132,8 +168,6 @@ class MedicationViewModel(
                         }
                 }
             }
-
-            else -> {}
         }
     }
 

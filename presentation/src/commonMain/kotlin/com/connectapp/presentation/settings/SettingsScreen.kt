@@ -12,12 +12,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.stringResource
@@ -26,15 +35,20 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onShowMessage: (String) -> Unit = {}
 ) {
     val viewModel: SettingsViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 SettingsEffect.NavigateToLogin -> onLogout()
+                SettingsEffect.NavigateToProfile -> onNavigateToProfile()
+                is SettingsEffect.ShowMessage -> onShowMessage(effect.message)
             }
         }
     }
@@ -42,8 +56,8 @@ fun SettingsScreen(
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(Dimen16),
+            verticalArrangement = Arrangement.spacedBy(Dimen8)
         ) {
             item {
                 ProfileHeader(
@@ -65,7 +79,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = Icons.Default.Lock,
                     title = stringResource(settings_item_security),
-                    onClick = { /* TODO */ }
+                    onClick = { viewModel.onIntent(SettingsIntent.SecurityClicked) }
                 )
             }
 
@@ -93,7 +107,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Info,
                     title = stringResource(settings_item_about),
                     subtitle = stringResource(settings_item_version, state.appVersion),
-                    onClick = { }
+                    onClick = { showAboutDialog = true }
                 )
             }
             item {
@@ -104,7 +118,18 @@ fun SettingsScreen(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(24.dp)) }
+            item { Spacer(modifier = Modifier.height(Dimen24)) }
+
+            state.errorMessage?.let { errorMessage ->
+                item {
+                    Text(
+                        text = errorMessage.asString(),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = Dimen8)
+                    )
+                }
+            }
 
             item {
                 if (state.isLoading) {
@@ -121,13 +146,118 @@ fun SettingsScreen(
                         )
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Dimen8))
                         Text(stringResource(logout))
                     }
                 }
             }
         }
     }
+
+    if (showAboutDialog) {
+        AboutDialog(onDismiss = { showAboutDialog = false })
+    }
+}
+
+@Composable
+private fun AboutDialog(onDismiss: () -> Unit) {
+    val email = stringResource(about_dialog_email)
+    val linkColor = MaterialTheme.colorScheme.primary
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(Dimen48)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        },
+        title = {
+            Text(
+                text = stringResource(settings_item_about),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Dimen16)
+            ) {
+                Text(
+                    text = stringResource(about_dialog_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                HorizontalDivider()
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(Dimen4)
+                ) {
+                    Text(
+                        text = stringResource(about_dialog_contact_label),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimen8)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = null,
+                            tint = linkColor,
+                            modifier = Modifier.size(Dimen20)
+                        )
+                        // Real inline hyperlink: tapping it opens the device's default mail
+                        // client (or the picker, if several are installed) via a mailto: URI.
+                        Text(
+                            text = buildAnnotatedString {
+                                withLink(
+                                    LinkAnnotation.Url(
+                                        url = "mailto:$email",
+                                        styles = TextLinkStyles(
+                                            style = SpanStyle(
+                                                color = linkColor,
+                                                fontWeight = FontWeight.SemiBold,
+                                                textDecoration = TextDecoration.Underline
+                                            )
+                                        )
+                                    )
+                                ) {
+                                    append(email)
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(close))
+            }
+        }
+    )
 }
 
 @Composable
@@ -139,32 +269,40 @@ private fun ProfileHeader(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = Dimen16),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(Dimen16)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(Dimen64)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = name.take(1).uppercase(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                if (name.isNotBlank()) {
+                    Text(
+                        text = name.trim().take(1).uppercase(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Dimen16))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -192,7 +330,7 @@ private fun SectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+        modifier = Modifier.padding(top = Dimen16, bottom = Dimen8)
     )
 }
 
@@ -201,16 +339,12 @@ private fun SettingsRow(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
-    onClick: () -> Unit
+    onClick: (() -> Unit)? = null
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface
-    ) {
+    val content: @Composable () -> Unit = {
         Row(
             modifier = Modifier
-                .padding(vertical = 12.dp, horizontal = 4.dp)
+                .padding(vertical = Dimen12, horizontal = Dimen4)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -218,9 +352,9 @@ private fun SettingsRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Dimen24)
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Dimen16))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -234,11 +368,30 @@ private fun SettingsRow(
                     )
                 }
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline
-            )
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    }
+
+    if (onClick != null) {
+        Surface(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            content()
+        }
+    } else {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            content()
         }
     }
 }
@@ -252,7 +405,7 @@ private fun SettingsSwitchRow(
 ) {
     Row(
         modifier = Modifier
-            .padding(vertical = 8.dp, horizontal = 4.dp)
+            .padding(vertical = Dimen8, horizontal = Dimen4)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -260,9 +413,9 @@ private fun SettingsSwitchRow(
             imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(Dimen24)
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(Dimen16))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,

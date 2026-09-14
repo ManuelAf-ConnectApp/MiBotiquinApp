@@ -22,7 +22,11 @@ kotlin {
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     android {
         namespace = "com.connectapp.data"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        compileSdk {
+            version = release(libs.versions.android.compileSdk.get().toInt()) {
+                minorApiLevel = libs.versions.android.minorApiLevel.get().toInt()
+            }
+        }
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         withHostTestBuilder {
@@ -65,6 +69,7 @@ kotlin {
                 // Add KMP dependencies here
 
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
                 api(libs.androidx.room.runtime)
                 api(libs.androidx.sqlite.bundled)
 

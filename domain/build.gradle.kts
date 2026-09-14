@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.androidLint)
+    kotlin("plugin.serialization") version libs.versions.kotlin.get()
 }
 
 kotlin {
@@ -11,7 +12,11 @@ kotlin {
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     android {
         namespace = "com.connectapp.domain"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        compileSdk {
+            version = release(libs.versions.android.compileSdk.get().toInt()) {
+                minorApiLevel = libs.versions.android.minorApiLevel.get().toInt()
+            }
+        }
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         withHostTestBuilder {
@@ -51,7 +56,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlin.stdlib)
-                // Add KMP dependencies here
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 

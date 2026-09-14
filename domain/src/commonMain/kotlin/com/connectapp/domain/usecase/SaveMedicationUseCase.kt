@@ -6,7 +6,7 @@ import com.connectapp.domain.repository.MedicationRepository
 class SaveMedicationUseCase(
     private val medicationRepository: MedicationRepository
 ) {
-    suspend operator fun invoke(medication: Medication): Result<Unit> {
+    suspend operator fun invoke(medication: Medication): Result<Medication> {
         return medicationRepository.saveMedication(medication)
     }
 }

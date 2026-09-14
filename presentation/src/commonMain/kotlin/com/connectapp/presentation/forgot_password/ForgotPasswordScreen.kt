@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -40,10 +39,10 @@ fun ForgotPasswordScreen(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = Dimen24),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(Dimen64))
 
         Text(
             text = stringResource(forgot_password_title),
@@ -52,7 +51,7 @@ fun ForgotPasswordScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimen16))
 
         Text(
             text = stringResource(forgot_password_instruction),
@@ -61,7 +60,7 @@ fun ForgotPasswordScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Dimen32))
 
         OutlinedTextField(
             value = state.email,
@@ -72,7 +71,7 @@ fun ForgotPasswordScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Dimen32))
 
         if (state.isLoading) {
             CircularProgressIndicator()
@@ -85,7 +84,7 @@ fun ForgotPasswordScreen(
             ) {
                 Text(
                     text = stringResource(forgot_password_success),
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(Dimen16),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
@@ -96,7 +95,7 @@ fun ForgotPasswordScreen(
                 onClick = { onIntent(ForgotPasswordIntent.SendEmailClicked) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(Dimen50),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
@@ -107,7 +106,7 @@ fun ForgotPasswordScreen(
         }
 
         state.errorMessage?.let {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
             Text(
                 text = it.asString(),
                 color = MaterialTheme.colorScheme.error,
@@ -119,7 +118,7 @@ fun ForgotPasswordScreen(
 
         TextButton(
             onClick = { onIntent(ForgotPasswordIntent.BackToLoginClicked) },
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = Dimen16)
         ) {
             Text(stringResource(button_back_to_login))
         }

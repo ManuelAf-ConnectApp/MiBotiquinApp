@@ -10,8 +10,8 @@ import com.connectapp.data.model.MedicationDto
 class MedicationDataSourceImpl(
     private val medicationDao: MedicationDao
 ): MedicationDataSource {
-    override suspend fun saveMedication(medication: MedicationDto) {
-        medicationDao.insertMedication(medication.toDomain().toEntity())
+    override suspend fun saveMedication(medication: MedicationDto): Long {
+        return medicationDao.insertMedication(medication.toDomain().toEntity())
     }
 
     override suspend fun getMedication(id: Long): MedicationDto? {
@@ -24,6 +24,10 @@ class MedicationDataSourceImpl(
 
     override suspend fun getUserMedicationsByCodUser(codUser: String): List<MedicationDto> {
         return medicationDao.getUserMedicationsByCodUserOnce(codUser).map { it.toDomain().toDto() }
+    }
+
+    override suspend fun deleteMedication(id: Long) {
+        medicationDao.deleteMedicationById(id)
     }
 }
 

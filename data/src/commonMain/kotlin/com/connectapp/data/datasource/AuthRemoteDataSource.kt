@@ -15,12 +15,14 @@ class AuthRemoteDataSourceImpl(
     override suspend fun login(email: String, password: String): Result<UserDto> {
         return networkInterceptor.execute {
             // Aquí iría la llamada real a la API, por ahora simulamos éxito
+            val mockId = if (email == "admin@admin.com") "admin" else "1"
             UserDto(
-                id = "1",
+                id = mockId,
                 email = email,
                 firstName = "Mock",
                 lastName = "Mock User",
                 phone = "123456789",
+                password = password,
                 createdAt = "2023-01-01",
                 updatedAt = "2023-01-01"
             )
@@ -35,6 +37,7 @@ class AuthRemoteDataSourceImpl(
                 firstName = name.split(" ").firstOrNull() ?: "Mock",
                 lastName = name.split(" ").getOrNull(1) ?: "User",
                 phone = "987654321",
+                password = password,
                 createdAt = "2023-01-01",
                 updatedAt = "2023-01-01"
             )

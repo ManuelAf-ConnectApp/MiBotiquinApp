@@ -7,7 +7,12 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "medications",
     foreignKeys = [
-        ForeignKey(entity = UserEntity::class, parentColumns = ["id"], childColumns = ["codUser"])
+        ForeignKey(
+            entity = UserEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["codUser"],
+            onDelete = ForeignKey.CASCADE
+        )
     ]
 )
 data class MedicationEntity(

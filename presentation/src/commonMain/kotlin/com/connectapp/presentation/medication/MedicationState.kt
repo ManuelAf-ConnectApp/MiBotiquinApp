@@ -19,5 +19,5 @@ data class MedicationState(
     val isLoading: Boolean = false,
     val errorMessage: UiText? = null
 ) {
-    val isSaveButtonEnabled: Boolean = name.isNotEmpty() && dosesPerDay > 0 && quantity.isNotEmpty() && durationDays.isNotEmpty() && startTimeHour in 0..23 && startTimeMinute in 0..59
+    val isSaveButtonEnabled: Boolean = user != null && name.isNotEmpty() && dosesPerDay > 0 && quantity.isNotEmpty() && durationDays.isNotEmpty() && startTimeHour in 0..23 && startTimeMinute in 0..59
 }

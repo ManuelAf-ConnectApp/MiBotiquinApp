@@ -1,5 +1,8 @@
 package com.connectapp.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Medication(
     val id: Long = 0,
     val name: String,

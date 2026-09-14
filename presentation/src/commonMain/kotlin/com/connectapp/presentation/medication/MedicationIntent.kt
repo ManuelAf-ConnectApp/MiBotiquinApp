@@ -1,10 +1,13 @@
 package com.connectapp.presentation.medication
 
+import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 
 sealed interface MedicationIntent {
 
     data class OnInitUserData(val user: User) : MedicationIntent
+    data class LoadMedication(val medication: Medication) : MedicationIntent
+    data object ClearMedication : MedicationIntent
     data class NameChanged(val name: String) : MedicationIntent
     data class DosesPerDayChanged(val doses: Int) : MedicationIntent
     data class QuantityChanged(val quantity: String) : MedicationIntent

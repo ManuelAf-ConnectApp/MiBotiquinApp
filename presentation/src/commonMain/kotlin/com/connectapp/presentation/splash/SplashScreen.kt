@@ -1,10 +1,8 @@
 package com.connectapp.presentation.splash
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,9 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.connectapp.commonresources.app_name_full
+import com.connectapp.commonresources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -44,14 +42,13 @@ fun SplashScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.Medication,
+            Image(
+                painter = painterResource(app_logo),
                 contentDescription = null,
-                modifier = Modifier.size(100.dp),
-                tint = Color.White
+                modifier = Modifier.size(Dimen120)
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Dimen16))
             
             Text(
                 text = stringResource(app_name_full),
