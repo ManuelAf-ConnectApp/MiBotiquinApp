@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -74,19 +73,14 @@ fun HomeScreen(
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     } else {
-        Box(
+        HomeScreenContent(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = Dimen16)
-                .statusBarsPadding(),
-        ) {
-            HomeScreenContent(
-                modifier = modifier,
-                state = state,
-                onIntent = onIntent,
-                onDeleteClick = { medicationToDelete = it }
-            )
-        }
+                .padding(horizontal = Dimen16),
+            state = state,
+            onIntent = onIntent,
+            onDeleteClick = { medicationToDelete = it }
+        )
     }
 
     medicationToDelete?.let { medication ->
@@ -121,8 +115,7 @@ private fun HomeScreenContent(
     onDeleteClick: (Medication) -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Dimen12),
     ) {
         item {

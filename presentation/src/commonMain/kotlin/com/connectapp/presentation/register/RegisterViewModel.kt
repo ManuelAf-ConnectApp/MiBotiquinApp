@@ -33,6 +33,8 @@ class RegisterViewModel(
             is RegisterIntent.EmailChanged -> onEmailChanged(intent.email)
             is RegisterIntent.PasswordChanged -> onPasswordChanged(intent.password)
             is RegisterIntent.ConfirmPasswordChanged -> onConfirmPasswordChanged(intent.confirmPassword)
+            RegisterIntent.TogglePasswordVisibility -> onTogglePasswordVisibility()
+            RegisterIntent.ToggleConfirmPasswordVisibility -> onToggleConfirmPasswordVisibility()
             RegisterIntent.RegisterClicked -> register()
             RegisterIntent.LoginClicked -> emitEffect(RegisterEffect.NavigateToLogin)
         }
@@ -52,6 +54,14 @@ class RegisterViewModel(
 
     private fun onConfirmPasswordChanged(confirmPassword: String) {
         _state.update { it.copy(confirmPassword = confirmPassword) }
+    }
+
+    private fun onTogglePasswordVisibility() {
+        _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+    }
+
+    private fun onToggleConfirmPasswordVisibility() {
+        _state.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
     }
 
     private fun register() {
