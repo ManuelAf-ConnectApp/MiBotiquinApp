@@ -107,7 +107,8 @@ private fun LoginScreenContent(
                 placeholder = { Text(stringResource(placeholder_email)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = state.errorMessage != null
             )
 
             Spacer(modifier = Modifier.height(Dimen16))
@@ -120,6 +121,7 @@ private fun LoginScreenContent(
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = state.errorMessage != null,
                 trailingIcon = {
                     val image =
                         if (state.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff

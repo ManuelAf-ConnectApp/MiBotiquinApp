@@ -1,4 +1,5 @@
 *.iml
+**/web/*
 .kotlin
 .gradle
 **/build/

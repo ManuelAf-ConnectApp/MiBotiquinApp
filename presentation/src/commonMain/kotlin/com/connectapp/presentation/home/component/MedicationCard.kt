@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import com.connectapp.commonresources.*
 import com.connectapp.domain.model.Medication
 import kotlin.time.Instant
-import kotlinx.datetime.Instant as KInstant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -82,10 +81,10 @@ internal fun MedicationCard(
                 )
                 
                 medication.startDate?.let { start ->
-                    val startDate = KInstant.fromEpochMilliseconds(start)
+                    val startDate = Instant.fromEpochMilliseconds(start)
                         .toLocalDateTime(TimeZone.currentSystemDefault()).date
                     val endDateStr = medication.endDate?.let { end ->
-                        val endDate = KInstant.fromEpochMilliseconds(end)
+                        val endDate = Instant.fromEpochMilliseconds(end)
                             .toLocalDateTime(TimeZone.currentSystemDefault()).date
                         stringResource(medication_date_until, endDate.toString())
                     } ?: ""

@@ -100,3 +100,7 @@ val about_dialog_contact_label = Res.string.about_dialog_contact_label
 val about_dialog_email = Res.string.about_dialog_email
 val button_accept = Res.string.button_accept
 val button_cancel = Res.string.button_cancel
+val delete_account = Res.string.delete_account
+val delete_account_confirmation_title = Res.string.delete_account_confirmation_title
+val delete_account_confirmation_message = Res.string.delete_account_confirmation_message
+val button_delete = Res.string.button_delete

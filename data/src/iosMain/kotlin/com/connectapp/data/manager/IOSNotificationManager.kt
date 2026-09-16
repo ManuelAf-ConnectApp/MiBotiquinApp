@@ -2,7 +2,7 @@ package com.connectapp.data.manager
 
 import com.connectapp.domain.manager.NotificationManager
 import com.connectapp.domain.model.Medication
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -108,8 +108,8 @@ class IOSNotificationManager : NotificationManager {
         val localDate = Instant.fromEpochMilliseconds(baseDateMillis).toLocalDateTime(timeZone)
         val preciseDateTime = LocalDateTime(
             year = localDate.year,
-            monthNumber = localDate.monthNumber,
-            dayOfMonth = localDate.dayOfMonth,
+            month = localDate.month,
+            day = localDate.day,
             hour = medication.startTimeHour,
             minute = medication.startTimeMinute,
             second = 0,
@@ -132,10 +132,11 @@ class IOSNotificationManager : NotificationManager {
         }
 
         var doseNumber = 1
-        val maxIosNotifications = 64 // iOS strict local notification limit per app
+        // Limit to 20 doses per medication to avoid hitting the global iOS 64-notification limit
+        val maxDosesPerMedication = 20
 
-        // Pre-schedule all remaining doses within the treatment window
-        while (doseTimeMillis <= endMillis && doseNumber <= maxIosNotifications) {
+        // Pre-schedule doses within the treatment window
+        while (doseTimeMillis <= endMillis && doseNumber <= maxDosesPerMedication) {
             val secondsFromNow = (doseTimeMillis - nowMillis) / 1000.0
 
             if (secondsFromNow > 0) {

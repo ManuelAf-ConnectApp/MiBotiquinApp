@@ -50,6 +50,8 @@ fun ProfileScreen(
             CircularProgressIndicator()
         }
     } else {
+        var showDeleteConfirmation by remember { mutableStateOf(false) }
+
         Box(
             modifier = modifier
                 .fillMaxSize(),
@@ -57,7 +59,32 @@ fun ProfileScreen(
         ) {
             ProfileScreenContent(
                 state = resolvedState,
-                onLogout = { onIntent(ProfileIntent.LogoutClicked) }
+                onLogout = { onIntent(ProfileIntent.LogoutClicked) },
+                onDeleteAccount = { showDeleteConfirmation = true }
+            )
+        }
+
+        if (showDeleteConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmation = false },
+                title = { Text(stringResource(delete_account_confirmation_title)) },
+                text = { Text(stringResource(delete_account_confirmation_message)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            onIntent(ProfileIntent.DeleteAccountClicked)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text(stringResource(button_delete))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmation = false }) {
+                        Text(stringResource(button_cancel))
+                    }
+                }
             )
         }
     }
@@ -67,7 +94,8 @@ fun ProfileScreen(
 @Composable
 private fun ProfileScreenContent(
     state: ProfileState,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -113,11 +141,23 @@ private fun ProfileScreenContent(
                 onClick = onLogout,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             ) {
                 Text(stringResource(logout))
+            }
+
+            Spacer(modifier = Modifier.height(Dimen8))
+
+            TextButton(
+                onClick = onDeleteAccount,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text(stringResource(delete_account))
             }
         } ?: Text(stringResource(error_user_not_found))
     }

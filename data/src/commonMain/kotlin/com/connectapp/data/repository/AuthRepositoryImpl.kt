@@ -85,4 +85,11 @@ class AuthRepositoryImpl(
         return Result.success(Unit)
     }
 
+    override suspend fun deleteAccount(): Result<Unit> {
+        return authRemoteDataSource.deleteAccount().onSuccess {
+            authLocalDataSource.clearSession()
+            userDao.clearUser()
+        }
+    }
+
 }

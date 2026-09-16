@@ -13,6 +13,7 @@ import com.connectapp.data.repository.AuthRepositoryImpl
 import com.connectapp.data.repository.MedicationRepositoryImpl
 import com.connectapp.domain.repository.AuthRepository
 import com.connectapp.domain.repository.MedicationRepository
+import com.connectapp.domain.usecase.DeleteAccountUseCase
 import com.connectapp.domain.usecase.DeleteMedicationUseCase
 import com.connectapp.domain.usecase.ForgotPasswordUseCase
 import com.connectapp.domain.usecase.GetUserMedicationByCodUserUseCase
@@ -72,6 +73,7 @@ val domainModule = module {
     factoryOf(::SaveNotificationUseCase)
     factoryOf(::GetCurrentUserUseCase)
     factoryOf(::LogoutUseCase)
+    factoryOf(::DeleteAccountUseCase)
     single<FormValidator> { FormValidatorImpl() }
     single { ThemeController(get()) }
     single { NotificationsController(get()) }

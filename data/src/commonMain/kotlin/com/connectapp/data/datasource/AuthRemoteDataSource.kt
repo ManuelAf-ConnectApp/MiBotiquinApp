@@ -7,6 +7,7 @@ interface AuthRemoteDataSource {
     suspend fun login(email: String, password: String): Result<UserDto>
     suspend fun register(name: String, email: String, password: String): Result<UserDto>
     suspend fun forgotPassword(email: String): Result<Unit>
+    suspend fun deleteAccount(): Result<Unit>
 }
 
 class AuthRemoteDataSourceImpl(
@@ -45,6 +46,12 @@ class AuthRemoteDataSourceImpl(
     }
 
     override suspend fun forgotPassword(email: String): Result<Unit> {
+        return networkInterceptor.execute {
+            Unit
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
         return networkInterceptor.execute {
             Unit
         }

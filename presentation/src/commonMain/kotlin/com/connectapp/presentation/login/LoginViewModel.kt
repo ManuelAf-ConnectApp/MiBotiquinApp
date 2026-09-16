@@ -94,13 +94,13 @@ class LoginViewModel(
 
     private fun onEmailChanged(email: String) {
         _state.update {
-            it.copy(email = email)
+            it.copy(email = email, errorMessage = null)
         }
     }
 
     private fun onPasswordChanged(password: String) {
         _state.update {
-            it.copy(password = password)
+            it.copy(password = password, errorMessage = null)
         }
     }
 

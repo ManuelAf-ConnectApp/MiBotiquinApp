@@ -2,6 +2,7 @@ package com.connectapp.presentation.profile
 
 import com.connectapp.domain.usecase.GetCurrentUserUseCase
 import com.connectapp.domain.usecase.LogoutUseCase
+import com.connectapp.domain.usecase.DeleteAccountUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState())
@@ -38,6 +40,10 @@ class ProfileViewModel(
 
             ProfileIntent.LogoutClicked -> {
                 logout()
+            }
+
+            ProfileIntent.DeleteAccountClicked -> {
+                deleteAccount()
             }
 
             ProfileIntent.LoadProfile -> {
@@ -73,6 +79,16 @@ class ProfileViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             logoutUseCase().onSuccess {
+                _state.update { it.copy(isLoading = false) }
+                _effect.emit(ProfileEffect.NavigateToLogin)
+            }
+        }
+    }
+
+    private fun deleteAccount() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            deleteAccountUseCase().onSuccess {
                 _state.update { it.copy(isLoading = false) }
                 _effect.emit(ProfileEffect.NavigateToLogin)
             }
