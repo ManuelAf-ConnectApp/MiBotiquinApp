@@ -82,7 +82,17 @@ private fun RegisterScreenContent(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { onIntent(RegisterIntent.NameChanged(it)) },
-                label = { Text(stringResource(label_full_name)) },
+                label = { Text(stringResource(label_name)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(Dimen16))
+
+            OutlinedTextField(
+                value = state.lastName,
+                onValueChange = { onIntent(RegisterIntent.LastNameChanged(it)) },
+                label = { Text(stringResource(label_last_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )

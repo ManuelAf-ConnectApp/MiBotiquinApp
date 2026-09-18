@@ -5,6 +5,7 @@ import com.connectapp.presentation.util.UiText
 data class RegisterState(
     val name: String = "",
     val nameError: UiText? = null,
+    val lastName: String = "",
     val email: String = "",
     val emailError: UiText? = null,
     val password: String = "",

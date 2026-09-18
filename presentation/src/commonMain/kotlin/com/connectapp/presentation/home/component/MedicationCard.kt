@@ -62,20 +62,16 @@ internal fun MedicationCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(
-                        medication_quantity_label,
-                        medication.quantity.toString(),
-                        medication.quantityUnit
-                    ),
+                    text = stringResource(medication_quantity_label)
+                        .replace("{quantity}", medication.quantity.toString())
+                        .replace("{unit}", medication.quantityUnit),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(
-                        medication_doses_summary,
-                        medication.dosesPerDay,
-                        medication.durationDays
-                    ),
+                    text = stringResource(medication_doses_summary)
+                        .replace("{doses}", medication.dosesPerDay.toString())
+                        .replace("{days}", medication.durationDays.toString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
