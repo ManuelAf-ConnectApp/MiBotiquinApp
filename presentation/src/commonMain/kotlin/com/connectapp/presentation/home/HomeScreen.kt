@@ -121,7 +121,11 @@ private fun HomeScreenContent(
         item {
             val userName = state.user?.firstName?.takeIf { it.isNotBlank() }
             Text(
-                text = if (userName != null) stringResource(welcome_back, userName) else stringResource(welcome_back_generic),
+                text = if (userName != null) {
+                    stringResource(welcome_back).replace("{name}", userName)
+                } else {
+                    stringResource(welcome_back_generic)
+                },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
