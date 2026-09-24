@@ -122,7 +122,7 @@ private fun HomeScreenContent(
             val userName = state.user?.firstName?.takeIf { it.isNotBlank() }
             Text(
                 text = if (userName != null) {
-                    stringResource(welcome_back).replace("{name}", userName)
+                    stringResource(welcome_back, userName)
                 } else {
                     stringResource(welcome_back_generic)
                 },
@@ -179,7 +179,7 @@ private fun HomeScreenContent(
         } else {
             item {
                 Text(
-                    text = stringResource(home_medications_count, state.medications.size),
+                    text = stringResource(home_medications_count, state.medications.size.toString()),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )

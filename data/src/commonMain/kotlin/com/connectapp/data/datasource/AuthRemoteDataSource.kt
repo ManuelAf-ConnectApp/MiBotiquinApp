@@ -3,12 +3,16 @@ package com.connectapp.data.datasource
 import com.connectapp.data.interceptor.NetworkInterceptor
 import com.connectapp.data.model.UserDto
 import com.connectapp.domain.model.AppError
+import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+// Updated AuthRemoteDataSource
 interface AuthRemoteDataSource {
     suspend fun login(email: String, password: String): Result<UserDto>
     suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<UserDto>
     suspend fun forgotPassword(email: String): Result<Unit>
-    suspend fun deleteAccount(): Result<Unit>
+    suspend fun deleteAccount(email: String): Result<Unit>
 }
 
 class AuthRemoteDataSourceImpl(
@@ -21,14 +25,12 @@ class AuthRemoteDataSourceImpl(
             return Result.failure(AppError.UserNotFound())
         }
         return networkInterceptor.execute {
-            // Aquí iría la llamada real a la API, por ahora simulamos éxito
             val mockId = if (email == "admin@admin.com") "admin" else "1"
             UserDto(
                 id = mockId,
                 email = email,
                 firstName = "Mock",
                 lastName = "Mock",
-                phone = "123456789",
                 password = password,
                 createdAt = "2023-01-01",
                 updatedAt = "2023-01-01"
@@ -36,31 +38,34 @@ class AuthRemoteDataSourceImpl(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<UserDto> {
         registeredEmails.add(email)
         return networkInterceptor.execute {
+            val now = Clock.System.now().toString()
+            val generatedId = Uuid.random().toString()
             UserDto(
-                id = "2",
+                id = generatedId,
                 email = email,
                 firstName = firstName,
                 lastName = lastName,
-                phone = "987654321",
                 password = password,
-                createdAt = "2023-01-01",
-                updatedAt = "2023-01-01"
+                createdAt = now,
+                updatedAt = now
             )
         }
     }
 
     override suspend fun forgotPassword(email: String): Result<Unit> {
         return networkInterceptor.execute {
-            Unit
+            Result.success(Unit).getOrThrow()
         }
     }
 
-    override suspend fun deleteAccount(): Result<Unit> {
+    override suspend fun deleteAccount(email: String): Result<Unit> {
         return networkInterceptor.execute {
-            Unit
+            registeredEmails.remove(email)
+            Result.success(Unit).getOrThrow()
         }
     }
 }

@@ -13,7 +13,7 @@ import com.connectapp.data.database.entity.MedicationEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
-@Database(entities = [UserEntity::class, MedicationEntity::class], version = 4) // v4: FK medications->users con onDelete=CASCADE (evita el error 787 al hacer login)
+@Database(entities = [UserEntity::class, MedicationEntity::class], version = 5) // v5: UserEntity id auto-generado dinámicamente por la base de datos
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
@@ -32,8 +32,8 @@ fun createRoomDatabase(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase 
             override fun onCreate(connection: SQLiteConnection) {
                 super.onCreate(connection)
                 connection.prepare(
-                    "INSERT INTO users (id, firstName, lastName, email, password, phone, createdAt, updatedAt) " +
-                            "VALUES ('admin', 'Admin', 'Control', 'admin@admin.com', 'Admin@2026', '000000000', '2026-08-17', '2026-08-17')"
+                    "INSERT INTO users (firstName, lastName, email, password, createdAt, updatedAt) " +
+                            "VALUES ('Admin', 'Control', 'admin@admin.com', 'Admin@2026', '2026-08-17', '2026-08-17')"
                 ).use { it.step() }
             }
         })

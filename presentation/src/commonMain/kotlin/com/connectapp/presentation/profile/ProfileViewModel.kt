@@ -86,9 +86,10 @@ class ProfileViewModel(
     }
 
     private fun deleteAccount() {
+        val email = _state.value.user?.email ?: return
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            deleteAccountUseCase().onSuccess {
+            deleteAccountUseCase(email).onSuccess {
                 _state.update { it.copy(isLoading = false) }
                 _effect.emit(ProfileEffect.NavigateToLogin)
             }

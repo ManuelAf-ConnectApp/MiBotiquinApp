@@ -30,7 +30,7 @@ class AuthRepositoryImpl(
             onSuccess = { userDto ->
                 try {
                     val userEntity = userDto.toEntity()
-                    if (userDao.getUserOnce()?.id != userEntity.id) {
+                    if (userDao.getUserOnce()?.id?.toString() != userEntity.id.toString()) {
                         userDao.clearAndInsertUser(userEntity)
                     }
 
@@ -38,7 +38,8 @@ class AuthRepositoryImpl(
                         authLocalDataSource.saveToken("mock_token_${userDto.id}")
                         authLocalDataSource.saveRememberMe(true)
                     }
-                    Result.success(userDto.toDomain())
+                    val persistedUser = userDao.getUserOnce()?.toDomain() ?: userDto.toDomain()
+                    Result.success(persistedUser)
                 } catch (e: Exception) {
                     Result.failure(AppError.UnknownError(e.message))
                 }
@@ -65,7 +66,8 @@ class AuthRepositoryImpl(
                     userDao.clearAndInsertUser(userEntity)
                     // Guardar token tras registro exitoso para evitar logout inmediato en iOS
                     authLocalDataSource.saveToken("mock_token_${userDto.id}")
-                    Result.success(userDto.toDomain())
+                    val persistedUser = userDao.getUserOnce()?.toDomain() ?: userDto.toDomain()
+                    Result.success(persistedUser)
                 } catch (e: Exception) {
                     Result.failure(AppError.CustomError(e.message ?: "Unknown database error"))
                 }
@@ -96,8 +98,8 @@ class AuthRepositoryImpl(
         return Result.success(Unit)
     }
 
-    override suspend fun deleteAccount(): Result<Unit> {
-        return authRemoteDataSource.deleteAccount().onSuccess {
+    override suspend fun deleteAccount(email: String): Result<Unit> {
+        return authRemoteDataSource.deleteAccount(email).onSuccess {
             authLocalDataSource.clearSession()
             userDao.clearUser()
         }
