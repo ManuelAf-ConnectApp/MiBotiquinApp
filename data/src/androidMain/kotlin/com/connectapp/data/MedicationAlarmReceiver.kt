@@ -67,13 +67,20 @@ class MedicationAlarmReceiver : BroadcastReceiver() {
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "medication_reminders"
 
+        val locale = context.resources.configuration.locales[0]
+        val isSpanish = locale.language.lowercase().startsWith("es")
+
+        val channelName = if (isSpanish) "Recordatorios de Medicación" else "Medication Reminders"
+        val notifTitle = if (isSpanish) "Hora de tu medicación" else "Time for your medication"
+        val notifBody = if (isSpanish) "No olvides tomar tu dosis de: $title" else "Don't forget to take your dose of: $title"
+
         val channel =
-            NotificationChannel(channelId, "Recordatorios de Medicación", NotificationManager.IMPORTANCE_HIGH)
+            NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
         notificationManager.createNotificationChannel(channel)
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle("Hora de tu medicación")
-            .setContentText("No olvides tomar tu dosis de: $title")
+            .setContentTitle(notifTitle)
+            .setContentText(notifBody)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

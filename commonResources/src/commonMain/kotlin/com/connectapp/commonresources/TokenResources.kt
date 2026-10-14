@@ -106,3 +106,6 @@ val delete_account = Res.string.delete_account
 val delete_account_confirmation_title = Res.string.delete_account_confirmation_title
 val delete_account_confirmation_message = Res.string.delete_account_confirmation_message
 val button_delete = Res.string.button_delete
+val notification_channel_name = Res.string.notification_channel_name
+val notification_reminder_title = Res.string.notification_reminder_title
+val notification_reminder_body = Res.string.notification_reminder_body

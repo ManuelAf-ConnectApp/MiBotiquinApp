@@ -135,14 +135,16 @@ class IOSNotificationManager : NotificationManager {
         // Limit to 20 doses per medication to avoid hitting the global iOS 64-notification limit
         val maxDosesPerMedication = 20
 
+        val (notifTitle, notifBody) = getNotificationTitleAndBody(medication.name)
+
         // Pre-schedule doses within the treatment window
         while (doseTimeMillis <= endMillis && doseNumber <= maxDosesPerMedication) {
             val secondsFromNow = (doseTimeMillis - nowMillis) / 1000.0
 
             if (secondsFromNow > 0) {
                 val content = UNMutableNotificationContent().apply {
-                    setTitle("Time for your medication")
-                    setBody("Don't forget to take your dose of: ${medication.name}")
+                    setTitle(notifTitle)
+                    setBody(notifBody)
                     setSound(UNNotificationSound.defaultSound())
                 }
 
@@ -175,5 +177,15 @@ class IOSNotificationManager : NotificationManager {
         // We need to know how many were scheduled or just use a range
         val identifiers = (1..64).map { "${medication.id}_dose_$it" }
         notificationCenter.removePendingNotificationRequestsWithIdentifiers(identifiers)
+    }
+
+    private fun getNotificationTitleAndBody(medicationName: String): Pair<String, String> {
+        val preferred = platform.Foundation.NSBundle.mainBundle.preferredLocalizations
+        val primaryLanguage = (preferred.firstOrNull() as? String)?.lowercase() ?: "es"
+        val isSpanish = primaryLanguage.startsWith("es")
+
+        val title = if (isSpanish) "Hora de tu medicación" else "Time for your medication"
+        val body = if (isSpanish) "No olvides tomar tu dosis de: $medicationName" else "Don't forget to take your dose of: $medicationName"
+        return Pair(title, body)
     }
 }
