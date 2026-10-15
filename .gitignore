@@ -4,6 +4,11 @@
 .gradle
 **/build/
 xcuserdata
+*.apk
+*.aab
+*.keystore
+*.jks
+**/release/
 !src/**/build/
 local.properties
 .idea

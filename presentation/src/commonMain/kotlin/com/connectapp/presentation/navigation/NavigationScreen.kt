@@ -75,7 +75,7 @@ fun NavigationScreen(
             backStack = backStack,
             onBack = {
                 if (backStack.size > 1) {
-                    backStack.removeLast()
+                    backStack.removeAt(backStack.lastIndex)
                     // Al volver atrás, informamos al ViewModel para que la UI (BottomBar) se actualice
                     val previousRoute = backStack.last() as NavigationRoute
                     viewModel.updateNavigationState(previousRoute)

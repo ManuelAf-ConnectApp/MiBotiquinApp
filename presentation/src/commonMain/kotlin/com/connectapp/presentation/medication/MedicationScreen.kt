@@ -231,7 +231,7 @@ private fun DurationSummary(days: String) {
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = stringResource(medication_duration_summary, days.toIntOrNull() ?: 0),
+                text = stringResource(medication_duration_summary, (days.toIntOrNull() ?: 0).toString()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )

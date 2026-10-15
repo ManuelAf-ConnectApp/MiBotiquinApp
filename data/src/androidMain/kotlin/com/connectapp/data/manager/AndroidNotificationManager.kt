@@ -39,9 +39,13 @@ class AndroidNotificationManager(
 
 
     private fun createNotificationChannel() {
+        val locale = context.resources.configuration.locales[0]
+        val isSpanish = locale.language.lowercase().startsWith("es")
+        val channelName = if (isSpanish) "Recordatorios de Medicación" else "Medication Reminders"
+
         val channel = NotificationChannel(
             "medication_reminders",
-            "Recordatorios de Medicación",
+            channelName,
             AndroidNetManager.IMPORTANCE_HIGH
         )
         val manager =

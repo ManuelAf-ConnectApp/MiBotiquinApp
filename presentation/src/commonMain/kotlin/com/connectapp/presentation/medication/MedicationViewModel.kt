@@ -137,7 +137,7 @@ class MedicationViewModel(
                 val medication = Medication(
                     id = stateValue.id,
                     name = stateValue.name,
-                    codUser = stateValue.user?.id.toString(), // Mock user id
+                    codUser = stateValue.user?.id ?: "",
                     dosesPerDay = stateValue.dosesPerDay,
                     quantity = stateValue.quantity.toDoubleOrNull() ?: 0.0,
                     quantityUnit = stateValue.quantityUnit,

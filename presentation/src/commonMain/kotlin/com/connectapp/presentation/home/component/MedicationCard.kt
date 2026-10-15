@@ -73,8 +73,8 @@ internal fun MedicationCard(
                 Text(
                     text = stringResource(
                         medication_doses_summary,
-                        medication.dosesPerDay,
-                        medication.durationDays
+                        medication.dosesPerDay.toString(),
+                        medication.durationDays.toString()
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

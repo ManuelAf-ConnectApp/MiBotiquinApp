@@ -30,9 +30,12 @@ class RegisterViewModel(
     fun onIntent(intent: RegisterIntent) {
         when (intent) {
             is RegisterIntent.NameChanged -> onNameChanged(intent.name)
+            is RegisterIntent.LastNameChanged -> onLastNameChanged(intent.lastName)
             is RegisterIntent.EmailChanged -> onEmailChanged(intent.email)
             is RegisterIntent.PasswordChanged -> onPasswordChanged(intent.password)
             is RegisterIntent.ConfirmPasswordChanged -> onConfirmPasswordChanged(intent.confirmPassword)
+            RegisterIntent.TogglePasswordVisibility -> onTogglePasswordVisibility()
+            RegisterIntent.ToggleConfirmPasswordVisibility -> onToggleConfirmPasswordVisibility()
             RegisterIntent.RegisterClicked -> register()
             RegisterIntent.LoginClicked -> emitEffect(RegisterEffect.NavigateToLogin)
         }
@@ -40,6 +43,10 @@ class RegisterViewModel(
 
     private fun onNameChanged(name: String) {
         _state.update { it.copy(name = name) }
+    }
+
+    private fun onLastNameChanged(lastName: String) {
+        _state.update { it.copy(lastName = lastName) }
     }
 
     private fun onEmailChanged(email: String) {
@@ -54,14 +61,23 @@ class RegisterViewModel(
         _state.update { it.copy(confirmPassword = confirmPassword) }
     }
 
+    private fun onTogglePasswordVisibility() {
+        _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+    }
+
+    private fun onToggleConfirmPasswordVisibility() {
+        _state.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
+    }
+
     private fun register() {
         val name = _state.value.name
+        val lastName = _state.value.lastName
         val email = _state.value.email
         val password = _state.value.password
         val confirmPassword = _state.value.confirmPassword
 
-        if (name.isBlank()) {
-            _state.update { it.copy(errorMessage = UiText.StringRes(error_empty_name)) }
+        if (name.isBlank() || lastName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+            _state.update { it.copy(errorMessage = UiText.StringRes(error_mandatory_fields)) }
             return
         }
 
@@ -83,7 +99,7 @@ class RegisterViewModel(
         _state.update { it.copy(isLoading = true, errorMessage = null) }
 
         viewModelScope.launch {
-            registerUseCase(name, email, password)
+            registerUseCase(firstName = name, lastName = lastName, email = email, password = password)
                 .onSuccess { user ->
                     _state.update { it.copy(isLoading = false, isRegistered = true) }
                     emitEffect(RegisterEffect.NavigateToHome(user))

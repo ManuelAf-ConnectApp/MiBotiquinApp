@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -116,7 +115,7 @@ private fun ProfileScreenContent(
             ProfileInfoItem(
                 icon = Icons.Default.Person,
                 label = stringResource(label_name),
-                value = "${user.firstName} ${user.lastName}"
+                value = "${user.firstName} ${user.lastName}".trim()
             )
 
             Spacer(modifier = Modifier.height(Dimen16))
@@ -125,14 +124,6 @@ private fun ProfileScreenContent(
                 icon = Icons.Default.Email,
                 label = stringResource(label_email),
                 value = user.email
-            )
-
-            Spacer(modifier = Modifier.height(Dimen16))
-
-            ProfileInfoItem(
-                icon = Icons.Default.Phone,
-                label = stringResource(label_phone),
-                value = user.phone
             )
 
             Spacer(modifier = Modifier.weight(1f))

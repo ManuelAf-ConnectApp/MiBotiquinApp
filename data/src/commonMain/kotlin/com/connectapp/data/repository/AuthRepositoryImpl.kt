@@ -5,6 +5,7 @@ import com.connectapp.data.datasource.AuthLocalDataSource
 import com.connectapp.data.datasource.AuthRemoteDataSource
 import com.connectapp.data.mapper.toDomain
 import com.connectapp.data.mapper.toEntity
+import com.connectapp.domain.model.AppError
 import com.connectapp.domain.model.User
 import com.connectapp.domain.repository.AuthRepository
 
@@ -25,45 +26,57 @@ class AuthRepositoryImpl(
             }
         }
 
-        return authRemoteDataSource.login(email, password).map { userDto ->
-            val userEntity = userDto.toEntity()
-            // La tabla "users" solo debe contener al usuario de la sesión activa
-            // (getUserOnce/getUser leen "LIMIT 1" sin WHERE); si no se limpia antes,
-            // cuentas de logins anteriores (o el usuario semilla) quedan como filas
-            // sueltas y esa lectura puede devolver la fila equivocada.
-            // Si el usuario que inicia sesión ya es el que hay en local, no lo
-            // borramos: "medications" tiene FK a "users" con onDelete=CASCADE, y
-            // reinsertarlo en cada login (sin "recordar sesión") arrastraría sus
-            // medicamentos ya guardados.
-            if (userDao.getUserOnce()?.id != userEntity.id) {
-                userDao.clearUser()
-                userDao.insertUser(userEntity)
-            }
+        return authRemoteDataSource.login(email, password).fold(
+            onSuccess = { userDto ->
+                try {
+                    val userEntity = userDto.toEntity()
+                    if (userDao.getUserOnce()?.id?.toString() != userEntity.id.toString()) {
+                        userDao.clearAndInsertUser(userEntity)
+                    }
 
-            if (rememberMe) {
-                authLocalDataSource.saveToken("mock_token_${userDto.id}")
-                authLocalDataSource.saveRememberMe(true)
-            }
-            
-            userDto.toDomain()
-        }
+                    if (rememberMe) {
+                        authLocalDataSource.saveToken("mock_token_${userDto.id}")
+                        authLocalDataSource.saveRememberMe(true)
+                    }
+                    val persistedUser = userDao.getUserOnce()?.toDomain() ?: userDto.toDomain()
+                    Result.success(persistedUser)
+                } catch (e: Exception) {
+                    Result.failure(AppError.UnknownError(e.message))
+                }
+            },
+            onFailure = { Result.failure(it) }
+        )
     }
 
     override suspend fun register(
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         password: String
     ): Result<User> {
         return authRemoteDataSource.register(
-            name = name,
+            firstName = firstName,
+            lastName = lastName,
             email = email,
             password = password
-        ).map { userDto ->
-            val userEntity = userDto.toEntity()
-            userDao.clearUser()
-            userDao.insertUser(userEntity)
-            userDto.toDomain()
-        }
+        ).fold(
+            onSuccess = { userDto ->
+                try {
+                    val userEntity = userDto.toEntity()
+                    userDao.clearAndInsertUser(userEntity)
+                    // Guardar token tras registro exitoso para evitar logout inmediato en iOS
+                    authLocalDataSource.saveToken("mock_token_${userDto.id}")
+                    val persistedUser = userDao.getUserOnce()?.toDomain() ?: userDto.toDomain()
+                    Result.success(persistedUser)
+                } catch (e: Exception) {
+                    Result.failure(AppError.CustomError(e.message ?: "Unknown database error"))
+                }
+            },
+            onFailure = { 
+                val mappedError = if (it is AppError) it else AppError.CustomError(it.message ?: "Unknown network error")
+                Result.failure(mappedError)
+            }
+        )
     }
 
     override suspend fun getCurrentUser(): Result<User?> {
@@ -85,8 +98,8 @@ class AuthRepositoryImpl(
         return Result.success(Unit)
     }
 
-    override suspend fun deleteAccount(): Result<Unit> {
-        return authRemoteDataSource.deleteAccount().onSuccess {
+    override suspend fun deleteAccount(email: String): Result<Unit> {
+        return authRemoteDataSource.deleteAccount(email).onSuccess {
             authLocalDataSource.clearSession()
             userDao.clearUser()
         }
