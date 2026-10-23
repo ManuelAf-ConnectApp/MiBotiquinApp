@@ -1,0 +1,17 @@
+package com.connectapp.domain.model
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class User(
+    val id: String,
+    val firstName: String,
+    val lastName: String,
+    val email: String,
+){
+    init {
+        require(firstName.isNotBlank()) { "First name cannot be blank" }
+        require(lastName.isNotBlank()) { "Last name cannot be blank" }
+        require(email.isNotBlank()) { "Email cannot be blank" }
+    }
+}

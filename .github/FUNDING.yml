@@ -1,0 +1,42 @@
+# Configura el botón "Sponsor" ❤️ que GitHub muestra en la cabecera del repositorio.
+# Documentación: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+#
+# - Este fichero debe estar en la carpeta .github de la rama por defecto.
+# - Descomenta sólo las plataformas que uses y sustituye los valores de ejemplo.
+# - Además, el botón debe activarse en Settings > General > Features > Sponsorships.
+
+# GitHub Sponsors: una organización y hasta cuatro desarrolladores.
+# github: [USERNAME]
+
+# Patreon: un usuario.
+# patreon: USERNAME
+
+# Open Collective: un usuario.
+# open_collective: USERNAME
+
+# Ko-fi: un usuario.
+# ko_fi: USERNAME
+
+# Liberapay: un usuario.
+# liberapay: USERNAME
+
+# IssueHunt: un usuario.
+# issuehunt: USERNAME
+
+# Polar: un usuario.
+# polar: USERNAME
+
+# Buy Me a Coffee: un usuario.
+# buy_me_a_coffee: USERNAME
+
+# thanks.dev: un usuario, con el formato u/gh/USERNAME.
+# thanks_dev: u/gh/USERNAME
+
+# LFX Mentorship (antes CommunityBridge): un proyecto.
+# community_bridge: PROJECT-NAME
+
+# Tidelift: un paquete, con el formato PLATAFORMA/PAQUETE (npm, pypi, rubygems, maven, packagist o nuget).
+# tidelift: maven/PACKAGE-NAME
+
+# URLs propias: hasta cuatro. Las que contienen ":" deben ir entre comillas.
+# custom: ["https://www.example.com/donate"]
