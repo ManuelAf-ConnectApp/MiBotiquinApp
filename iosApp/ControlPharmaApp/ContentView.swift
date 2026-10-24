@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  ControlPharmaApp
+//  MiBotiquinApp
 //
 //  Created by Manuel Alconchel on 22/09/2026.
 //

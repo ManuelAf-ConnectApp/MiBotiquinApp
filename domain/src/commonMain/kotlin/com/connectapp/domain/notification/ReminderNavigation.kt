@@ -1,6 +1,6 @@
 package com.connectapp.domain.notification
 
-import kotlcoroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.updateAndGet
 

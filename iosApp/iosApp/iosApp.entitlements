@@ -4,7 +4,7 @@
 <dict>
     <key>com.apple.developer.associated-appclip-app-identifiers</key>
     <array>
-        <string>$(AppIdentifierPrefix)com.connectapp.pharmaControlApp.PharmaControlApp.Clip</string>
+        <string>$(AppIdentifierPrefix)com.connectapp.mibotiquinapp.App.Clip</string>
     </array>
 </dict>
 </plist>

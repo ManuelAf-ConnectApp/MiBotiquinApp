@@ -21,7 +21,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            freeCompilerArgs += listOf("-Xbinary=bundleId=com.connectapp.controlpharmaapp.ComposeApp")
+            freeCompilerArgs += listOf("-Xbinary=bundleId=com.connectapp.mibotiquinapp.ComposeApp")
         }
     }
 
@@ -66,7 +66,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.connectapp.controlpharmaapp"
+    namespace = "com.connectapp.mibotiquinapp"
     compileSdk {
         version = release(libs.versions.android.compileSdk.get().toInt()) {
             minorApiLevel = libs.versions.android.minorApiLevel.get().toInt()
@@ -74,7 +74,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.connectapp.controlpharmaapp"
+        applicationId = "com.connectapp.mibotiquinapp"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 3

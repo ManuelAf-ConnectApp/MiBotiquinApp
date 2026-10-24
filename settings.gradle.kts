@@ -1,4 +1,4 @@
-rootProject.name = "ControlPharmaApp"
+rootProject.name = "MiBotiquinApp"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

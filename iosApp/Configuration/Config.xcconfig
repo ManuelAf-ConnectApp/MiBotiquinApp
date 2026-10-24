@@ -1,7 +1,7 @@
 TEAM_ID=
 
 PRODUCT_NAME=Mi Botiquin App
-PRODUCT_BUNDLE_IDENTIFIER=com.connectapp.pharmaControlApp.PharmaControlApp
+PRODUCT_BUNDLE_IDENTIFIER=com.connectapp.mibotiquinapp.App
 
 CURRENT_PROJECT_VERSION=1
 MARKETING_VERSION=1.0
