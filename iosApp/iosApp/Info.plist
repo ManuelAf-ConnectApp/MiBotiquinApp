@@ -5,9 +5,9 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDisplayName</key>
-	<string>Control Pharma App</string>
+	<string>Mi Botiquin App</string>
 	<key>CFBundleName</key>
-	<string>Control Pharma App</string>
+	<string>Mi Botiquin App</string>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 </dict>

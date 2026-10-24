@@ -1,6 +1,6 @@
-# Pharma Control App - Kotlin Multiplatform
+# Mi Botiquin App - Kotlin Multiplatform
 
-**Pharma Control App** es una aplicación desarrollada con **Kotlin Multiplatform (KMP)** diseñada para ayudar a los usuarios a gestionar sus medicamentos y recordatorios. Está construida siguiendo los principios de **Clean Architecture** y el patrón **MVI (Model-View-Intent)**, orientada a **Android** e **iOS** utilizando **Compose Multiplatform**.
+**Mi Botiquin App** es una aplicación desarrollada con **Kotlin Multiplatform (KMP)** diseñada para ayudar a los usuarios a gestionar sus medicamentos y recordatorios. Está construida siguiendo los principios de **Clean Architecture** y el patrón **MVI (Model-View-Intent)**, orientada a **Android** e **iOS** utilizando **Compose Multiplatform**.
 
 ## 🚀 Descripción del Proyecto
 

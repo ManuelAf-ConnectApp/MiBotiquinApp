@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Control Pharma App</string>
+	<string>Mi Botiquin App</string>
 	<key>CFBundleName</key>
-	<string>Control Pharma App</string>
+	<string>Mi Botiquin App</string>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>NSAppClip</key>

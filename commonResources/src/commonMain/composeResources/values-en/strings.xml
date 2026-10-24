@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Control Pharma</string>
+    <string name="app_name">Mi Botiquin App</string>
     <string name="settings_section_account">Account</string>
     <string name="settings_item_personal_info">Personal Information</string>
     <string name="settings_item_security">Security &amp; Password</string>
@@ -14,7 +14,7 @@
     <string name="edit_profile">Edit Profile</string>
     <string name="go">Go</string>
     <string name="settings">Settings</string>
-    <string name="app_name_full">Control Pharma App</string>
+    <string name="app_name_full">Mi Botiquin App</string>
     <string name="error_empty_email">Email cannot be empty</string>
     <string name="forgot_password_title">Forgot my password</string>
     <string name="forgot_password_instruction">Enter your email to receive a recovery link.</string>
@@ -41,7 +41,7 @@
     <string name="label_name">First Name</string>
     <string name="label_phone">Phone</string>
     <string name="error_user_not_found">User not found</string>
-    <string name="main_title">Control Pharma</string>
+    <string name="main_title">Mi Botiquin App</string>
     <string name="login_title">Welcome back</string>
     <string name="login_subtitle">Log in to your account</string>
     <string name="placeholder_email">example@mail.com</string>
