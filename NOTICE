@@ -1,0 +1,44 @@
+Mi Botiquín App
+
+Project source is distributed under Apache License, Version 2.0; see LICENSE.
+This notice does not relicense third-party SDKs, platform software or catalogue data.
+
+Inherited attribution (retained from NOTICE.md):
+Copyright 2026 Sngular
+
+TODO: Confirm the inherited copyright holder and logo/asset provenance before release.
+No new attribution or ownership is assigned by the implementation changes. Preserve the
+inherited NOTICE.md as well; its dependency list is not a complete resolved-binary audit.
+
+Third-party components
+----------------------
+The existing Kotlin, kotlinx, Compose/AndroidX and Koin components retain their own
+licenses/notices. See the inherited list in NOTICE.md and upstream project licenses.
+SQLite bundled distributions and transitive native libraries may carry additional notices.
+
+Android code reading uses Google Play services Code Scanner 16.1.0. This SDK is not
+represented as Apache-licensed project source. Its applicable Google terms and privacy
+information are at https://developers.google.com/ml-kit/terms and
+https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner .
+Camera processing is local; the SDK may communicate technical usage/performance metrics.
+Manual medication/CN entry does not instantiate that scanner.
+
+TODO: Resolve the complete release dependency graph and preserve required upstream
+NOTICE/license files, including Google SDK and native transitive artifacts, before publishing.
+This file records known dependencies and does not certify a complete license audit.
+
+CIMA/AEMPS information
+----------------------
+Fuente de la información: Agencia Española de Medicamentos y Productos Sanitarios
+www.aemps.gob.es
+
+The application displays the requested presentation's source and retrieval time, and
+retains provenance with a verified name. A manually renamed medication loses the saved
+catalogue attribution. No catalogue dataset, images or real medicine fixtures are bundled.
+No AEMPS participation, sponsorship, endorsement or medical certification is implied.
+
+Reference terms: https://listadomedicamentos.aemps.gob.es/Aviso_Legal_Nomenclator.pdf
+API: https://cima.aemps.es/cima/resources/docs/CIMA_REST_API.pdf
+Open-data entry: https://sede.aemps.gob.es/datos-abiertos/
+
+Voluntary acknowledgements, if added later, must be distinguished from mandatory notices.
