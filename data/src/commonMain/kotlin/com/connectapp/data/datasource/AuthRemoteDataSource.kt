@@ -1,13 +1,20 @@
 package com.connectapp.data.datasource
 
 import com.connectapp.data.interceptor.NetworkInterceptor
+import com.connectapp.data.database.dao.UserDao
+import com.connectapp.data.database.entity.UserEntity
+import com.connectapp.data.mapper.toDto
 import com.connectapp.data.model.UserDto
+import com.connectapp.data.security.PasswordHasher
 import com.connectapp.domain.model.AppError
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-// Updated AuthRemoteDataSource
+/**
+ * Local authentication store retained behind the former data-source contract so callers do not
+ * depend on Room. It never contacts a service or sends recovery email.
+ */
 interface AuthRemoteDataSource {
     suspend fun login(email: String, password: String): Result<UserDto>
     suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<UserDto>
@@ -16,56 +23,41 @@ interface AuthRemoteDataSource {
 }
 
 class AuthRemoteDataSourceImpl(
-    private val networkInterceptor: NetworkInterceptor
+    @Suppress("unused") private val networkInterceptor: NetworkInterceptor,
+    private val users: UserDao
 ) : AuthRemoteDataSource {
-    private val registeredEmails = mutableSetOf("admin@admin.com", "user@mail.com", "test@test.com")
-
     override suspend fun login(email: String, password: String): Result<UserDto> {
-        if (!registeredEmails.contains(email)) {
-            return Result.failure(AppError.UserNotFound())
+        val user = users.getUserByEmail(email) ?: return Result.failure(AppError.InvalidCredentials())
+        val valid = withContext(Dispatchers.Default) { PasswordHasher.verify(password, user.password) }
+        if (!valid) return Result.failure(AppError.InvalidCredentials())
+        if (PasswordHasher.needsRehash(user.password)) {
+            val replacement = withContext(Dispatchers.Default) { PasswordHasher.hash(password) }
+            users.upgradePasswordHash(user.id, user.password, replacement)
         }
-        return networkInterceptor.execute {
-            val mockId = if (email == "admin@admin.com") "admin" else "1"
-            UserDto(
-                id = mockId,
-                email = email,
-                firstName = "Mock",
-                lastName = "Mock",
-                password = password,
-                createdAt = "2023-01-01",
-                updatedAt = "2023-01-01"
-            )
-        }
+        return Result.success(user.toDto())
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     override suspend fun register(firstName: String, lastName: String, email: String, password: String): Result<UserDto> {
-        registeredEmails.add(email)
-        return networkInterceptor.execute {
+        if (users.getUserByEmail(email) != null) return Result.failure(AppError.EmailAlreadyRegistered())
+        return try {
             val now = Clock.System.now().toString()
-            val generatedId = Uuid.random().toString()
-            UserDto(
-                id = generatedId,
-                email = email,
-                firstName = firstName,
-                lastName = lastName,
-                password = password,
-                createdAt = now,
-                updatedAt = now
-            )
+            val hash = withContext(Dispatchers.Default) { PasswordHasher.hash(password) }
+            val id = users.insertUser(UserEntity(
+                firstName = firstName.trim(), lastName = lastName.trim(), email = email,
+                password = hash, createdAt = now, updatedAt = now
+            ))
+            Result.success(checkNotNull(users.getUserById(id)).toDto())
+        } catch (_: Exception) {
+            // A competing registration is still reported as an existing local account.
+            Result.failure(AppError.EmailAlreadyRegistered())
         }
     }
 
     override suspend fun forgotPassword(email: String): Result<Unit> {
-        return networkInterceptor.execute {
-            Result.success(Unit).getOrThrow()
-        }
+        return Result.failure(AppError.RecoveryUnavailable())
     }
 
     override suspend fun deleteAccount(email: String): Result<Unit> {
-        return networkInterceptor.execute {
-            registeredEmails.remove(email)
-            Result.success(Unit).getOrThrow()
-        }
+        return Result.success(Unit)
     }
 }

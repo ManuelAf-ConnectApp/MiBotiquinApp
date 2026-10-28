@@ -23,10 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.connectapp.presentation.scan.ScanScreen
+import com.connectapp.presentation.stock.StockScreen
+import com.connectapp.presentation.dose.DoseScreen
 import com.connectapp.presentation.MainViewModel
 import com.connectapp.presentation.component.ScreenTransitionIndicator
 import com.connectapp.presentation.forgot_password.ForgotPasswordScreen
 import com.connectapp.presentation.home.HomeScreen
+import com.connectapp.presentation.history.HistoryScreen
 import com.connectapp.domain.model.Medication
 import com.connectapp.presentation.login.LoginScreen
 import com.connectapp.presentation.medication.MedicationScreen
@@ -43,15 +47,26 @@ fun NavigationScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel,
 ) {
-    val backStack = remember { mutableStateListOf<Any>(NavigationRoute.SplashRoute) }
-
     val navState by viewModel.navState.collectAsState()
+    val backStack = remember {
+        if (navState.route is NavigationRoute.DoseRoute) mutableStateListOf<Any>(viewModel.authenticatedHomeRoute, navState.route)
+        else mutableStateListOf<Any>(navState.route)
+    }
 
     LaunchedEffect(navState.route) {
         val newRoute = navState.route
         if (backStack.lastOrNull() != newRoute) {
-            if (newRoute is NavigationRoute.HomeRoute || newRoute == NavigationRoute.SplashRoute) {
+            // Home, Splash y Login son raíces: se descarta la pila anterior. En Login es lo que
+            // impide volver con "atrás" a pantallas de la sesión cerrada.
+            if (newRoute is NavigationRoute.HomeRoute ||
+                newRoute == NavigationRoute.SplashRoute ||
+                newRoute == NavigationRoute.LoginRoute
+            ) {
                 backStack.clear()
+                backStack.add(newRoute)
+            } else if (newRoute is NavigationRoute.DoseRoute) {
+                backStack.clear()
+                backStack.add(viewModel.authenticatedHomeRoute)
                 backStack.add(newRoute)
             } else {
                 backStack.add(newRoute)
@@ -162,6 +177,32 @@ fun NavigationScreen(
                     }
                 }
 
+                NavigationRoute.ScanRoute -> {
+                    NavEntry(key = key) {
+                        ScanScreen(modifier,
+                            onConfirm = { product -> viewModel.updateNavigationState(NavigationRoute.MedicationRoute(viewModel.authenticatedHomeRoute.user, prefill = product)) },
+                            onManual = { viewModel.updateNavigationState(NavigationRoute.MedicationRoute(viewModel.authenticatedHomeRoute.user)) })
+                    }
+                }
+
+                is NavigationRoute.StockRoute -> {
+                    NavEntry(key = key) {
+                        StockScreen(key.medicationId, modifier, onOpenDose = { viewModel.updateNavigationState(NavigationRoute.DoseRoute(it)) })
+                    }
+                }
+
+                is NavigationRoute.DoseRoute -> {
+                    NavEntry(key = key) {
+                        DoseScreen(key.eventId, modifier,
+                            onStock = { medicationId -> viewModel.updateNavigationState(NavigationRoute.StockRoute(medicationId, key.eventId)) },
+                            onHome = { viewModel.updateNavigationState(viewModel.authenticatedHomeRoute) })
+                    }
+                }
+
+                NavigationRoute.HistoryRoute -> {
+                    NavEntry(key = key) { HistoryScreen(modifier) }
+                }
+
                 is NavigationRoute.HomeRoute -> {
                     NavEntry(key = key) {
                         key.user?.let { user ->
@@ -171,6 +212,9 @@ fun NavigationScreen(
                                 onNavigateToAddMedication = {
                                     viewModel.updateNavigationState(NavigationRoute.MedicationRoute(user))
                                 },
+                                onStock = { viewModel.updateNavigationState(NavigationRoute.StockRoute()) },
+                                onHistory = { viewModel.updateNavigationState(NavigationRoute.HistoryRoute) },
+                                onOpenDose = { id -> viewModel.updateNavigationState(NavigationRoute.DoseRoute(id)) },
                                 onNavigateToEditMedication = { medication ->
                                     viewModel.updateNavigationState(
                                         NavigationRoute.MedicationRoute(user, medication)
@@ -189,6 +233,7 @@ fun NavigationScreen(
                                 modifier = modifier,
                                 user = user,
                                 medication = key.medication,
+                                prefill = key.prefill,
                                 onNavigateBack = {
                                     viewModel.onBack()
                                 },

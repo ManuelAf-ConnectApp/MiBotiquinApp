@@ -1,11 +1,13 @@
 package com.connectapp.presentation.settings
 
+import com.connectapp.domain.model.AppInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.connectapp.commonresources.default_user_name
-import com.connectapp.commonresources.message_not_available
 import com.connectapp.domain.usecase.GetCurrentUserUseCase
 import com.connectapp.domain.usecase.LogoutUseCase
+import com.connectapp.domain.usecase.SyncRemindersUseCase
+import com.connectapp.domain.manager.NotificationManager
 import com.connectapp.presentation.notification.NotificationsController
 import com.connectapp.presentation.theme.ThemeController
 import com.connectapp.presentation.util.asUiText
@@ -23,10 +25,14 @@ class SettingsViewModel(
     private val logoutUseCase: LogoutUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val notificationsController: NotificationsController,
-    private val themeController: ThemeController
+    private val themeController: ThemeController,
+    private val syncReminders: SyncRemindersUseCase,
+    private val notificationManager: NotificationManager,
+    appInfo: AppInfo
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState(
+        appVersion = appInfo.version,
         notificationsEnabled = notificationsController.notificationsEnabled.value,
         darkModeEnabled = themeController.isDarkTheme.value
     ))
@@ -36,7 +42,6 @@ class SettingsViewModel(
     val effect: SharedFlow<SettingsEffect> = _effect.asSharedFlow()
 
     init {
-        loadUserSettings()
         observeTheme()
         observeNotifications()
     }
@@ -82,9 +87,15 @@ class SettingsViewModel(
 
     fun onIntent(intent: SettingsIntent) {
         when (intent) {
+            SettingsIntent.NotificationDiagnosticsClicked -> {
+                val diagnostic = notificationManager.diagnostics()
+                _state.update { it.copy(notificationDiagnostic = "${diagnostic.detail}: sistema=" + if (diagnostic.systemEnabled) "activo" else "bloqueado" + ", alarmas exactas=" + (diagnostic.exactAlarmsAvailable?.let { if (it) "disponibles" else "no disponibles" } ?: "no aplicable") + ", avisos planificados=${diagnostic.scheduledCount}") }
+            }
+            SettingsIntent.LoadSettings -> loadUserSettings()
             SettingsIntent.LogoutClicked -> logout()
             is SettingsIntent.NotificationsToggled -> {
                 notificationsController.setNotificationsEnabled(intent.enabled)
+                viewModelScope.launch { syncReminders() }
             }
 
             is SettingsIntent.DarkModeToggled -> {
@@ -99,13 +110,13 @@ class SettingsViewModel(
 
             SettingsIntent.SecurityClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(SettingsEffect.ShowMessage(getString(message_not_available)))
+                    _effect.emit(SettingsEffect.NavigateToProfile)
                 }
             }
 
             SettingsIntent.PrivacyPolicyClicked -> {
                 viewModelScope.launch {
-                    _effect.emit(SettingsEffect.ShowMessage(getString(message_not_available)))
+                    _effect.emit(SettingsEffect.ShowPrivacyInfo)
                 }
             }
         }

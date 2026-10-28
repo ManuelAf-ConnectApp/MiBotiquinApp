@@ -4,6 +4,57 @@ Changes are recorded using the Keep a Changelog categories. No released versions
 
 ## [Unreleased]
 
+### Dose history and treatment archive — 2026-10-27
+- Add an account-scoped dose-history screen for confirmed, skipped and obsolete events.
+- Replace treatment deletion from Home with non-destructive archiving: archived treatments stop
+  appearing in active lists and generating reminders while their dose and inventory records stay
+  available to history and encrypted backups.
+- Add Room migration v13→v14, archive persistence in backups, and regression coverage for
+  archive isolation and historical doses. Android/iOS compilation and domain/data tests pass;
+  no APK was generated.
+
+### Custom schedules and reminder snooze — 2026-10-27
+- Add validated custom daily medication times, persisted through Room migration v11→v12 and
+  used by reminder planning while retaining the former evenly spaced schedule as fallback.
+- Add a persistent, conditional ten-minute snooze for pending doses. It retains the scheduled
+  dose and stock state, reschedules notifications from the stored value, and is protected from
+  conflicting resolution transitions.
+- Add Room migration v12→v13 and real iOS historical-database migration coverage. Domain/data
+  tests plus Android and iOS Kotlin compilation pass; no APK was generated.
+
+### Historical database migration — 2026-10-26
+- Add non-destructive Room migrations from every exported v1--v4 schema to v5, then through v11.
+- Preserve medication ownership when historical text user IDs are converted to the current integer IDs;
+  v1/v2 accounts receive an empty password because those schemas did not store one.
+- Exercise v1--v8 files with the production Room builder, schema validator, post-migration writes,
+  reopen and foreign-key checks on iOS. Validate 77 exercised iOS checks; no APK generated.
+
+### Local authentication — 2026-10-26
+- Replace the simulated account source with local Room-backed registration and password login.
+- Hash new local passwords with PBKDF2, upgrade valid legacy plaintext passwords on login, and
+  reject invalid credentials or duplicate registrations.
+- Connect one-time recovery-code enrollment in Profile and local password reset in the UI.
+- Remove the simulated email-recovery wording from the user interface and documentation.
+- Validate 69 Android JVM checks, 73 exercised iOS checks, Android presentation and app Kotlin
+  compilation, without generating an APK.
+
+### Migration and reminder validation — 2026-10-25
+- Validate v5/v6/v7/v8→v11 by opening temporary historical SQLite files with the production Room builder on iOS, then writing and reopening them. Validate account/medication preservation and foreign keys.
+- Verify an unsupported v4 database remains intact after Room rejects opening it.
+- Derive portable migration fixtures from the committed Room exports; add a generator with a --check mode without inventing schema hashes.
+- Fix a reminder synchronization race: re-read the enabled preference after planning, and cancel alarms when disabled even if planning fails. Add six shared regression checks.
+- Validation: 68 JVM checks, 72 exercised iOS checks and 11 auxiliary SQLite checks pass. Keychain still needs signed-app acceptance; Android upgrade/device acceptance remains pending. No APK generated.
+
+### Integration update — 2026-10-25
+- Preserve the current simulated authentication source; adapt session persistence to stable local user IDs so medication, doses and inventory survive logout.
+- Integrate pending medication, reminder, stock, scanner and design changes; keep local recovery-code UI and DI disabled for compatibility with simulated access.
+- Generate Room v11 with Android/iOS KSP and restore historical generated v6/v7 schemas for migration checks.
+- Fix Compose cross-module nullable stock reads, recovery preview compatibility, missing Android backup resource and scanner dependency registration.
+- Run SQLite migration tests on iOS/Android devices; the Android host runner cannot load the Android SQLite JNI library on macOS.
+- Validation: 62 JVM tests, 61 exercised iOS checks and 11 SQLite checks pass. One additional iOS Keychain case returns without checking storage when Keychain is unavailable; signed-app validation remains pending.
+- No new APK generated. Device camera/catalogue/notification/accessibility acceptance remains pending.
+- Earlier local recovery/authentication entries below describe the previous implementation, not the currently selected simulated access flow.
+
 ### Security
 - Scope stock counts, movements and updates to the active local account; reject negative/overflowing balances and silent unit/product replacement.
 - Commit first Taken transition, inventory debit and unique event consumption together; rollback all three on failure.

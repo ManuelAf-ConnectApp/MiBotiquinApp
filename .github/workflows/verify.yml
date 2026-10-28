@@ -1,0 +1,31 @@
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate resources, Room exports and migration fixtures
+        run: |
+          python3 scripts/verify_resources.py
+          python3 scripts/generate_migration_fixtures.py --check
+          python3 scripts/verify_recovery_sql.py
+      - name: Run shared Android-host tests (no APK is assembled)
+        run: ./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest --warning-mode all
+      - name: Inspect dependency graphs
+        run: ./gradlew :data:dependencies :presentation:dependencies --warning-mode all

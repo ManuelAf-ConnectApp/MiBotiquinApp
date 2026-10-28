@@ -69,9 +69,10 @@ sources += [
  'data/src/commonMain/kotlin/com/connectapp/data/repository/CatalogueRepositoryImpl.kt',
  'data/src/androidMain/kotlin/com/connectapp/data/catalogue/AndroidCatalogueHttpClient.kt',
  'data/src/commonTest/kotlin/com/connectapp/data/repository/CatalogueRepositoryTest.kt',
- 'domain/src/commonTest/kotlin/com/connectapp/domain/catalogue/SpanishMedicationCodeTest.kt']
+ 'domain/src/commonTest/kotlin/com/connectapp/domain/catalogue/SpanishMedicationCodeTest.kt',
+ 'domain/src/commonTest/kotlin/com/connectapp/domain/catalogue/GtinTest.kt']
 temporary_output = TemporaryDirectory(prefix='mibotiquin-domain-')
 out = temporary_output.name
 subprocess.run(['java','-cp',':'.join(compiler),'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler','-no-stdlib','-no-reflect','-classpath',':'.join(deps),'-d',out,*sources],check=True)
 subprocess.run(['java','-cp',':'.join([out,*deps]),'org.junit.runner.JUnitCore',
- 'com.connectapp.domain.model.DoseQuantityTest','com.connectapp.domain.validator.MedicationRulesTest','com.connectapp.domain.reminder.DoseScheduleTest','com.connectapp.data.mapper.MedicationPersistenceTest','com.connectapp.data.repository.DoseRepositoryTest','com.connectapp.domain.notification.ReminderNavigationTest','com.connectapp.data.repository.StockRepositoryTest','com.connectapp.domain.stock.StockEstimatorTest','com.connectapp.data.repository.CatalogueRepositoryTest','com.connectapp.domain.catalogue.SpanishMedicationCodeTest'],check=True)
+ 'com.connectapp.domain.model.DoseQuantityTest','com.connectapp.domain.validator.MedicationRulesTest','com.connectapp.domain.reminder.DoseScheduleTest','com.connectapp.data.mapper.MedicationPersistenceTest','com.connectapp.data.repository.DoseRepositoryTest','com.connectapp.domain.notification.ReminderNavigationTest','com.connectapp.data.repository.StockRepositoryTest','com.connectapp.domain.stock.StockEstimatorTest','com.connectapp.data.repository.CatalogueRepositoryTest','com.connectapp.domain.catalogue.SpanishMedicationCodeTest','com.connectapp.domain.catalogue.GtinTest'],check=True)

@@ -88,6 +88,8 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.google.code.scanner)
+                implementation(libs.androidx.activity.compose)
                 // Add Android-specific dependencies here. Note that this source set depends on
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.

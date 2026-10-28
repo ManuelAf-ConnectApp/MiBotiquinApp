@@ -8,4 +8,5 @@ interface MedicationDataSource {
     suspend fun getAllMedications(): List<MedicationDto>
     suspend fun getUserMedicationsByCodUser(codUser: String): List<MedicationDto>
     suspend fun deleteMedication(id: Long)
+    suspend fun archiveMedication(id: Long, owner: String): Boolean
 }

@@ -18,3 +18,10 @@ val Dimen50 = 50.dp
 val Dimen64 = 64.dp
 val Dimen100 = 100.dp
 val Dimen120 = 120.dp
+
+val Dimen0 = 0.dp
+val Dimen56 = 56.dp
+val Dimen80 = 80.dp
+val Dimen560 = 560.dp
+val Dimen1 = 1.dp
+val Dimen280 = 280.dp

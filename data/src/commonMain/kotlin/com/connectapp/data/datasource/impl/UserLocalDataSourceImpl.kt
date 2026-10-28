@@ -15,11 +15,11 @@ class UserLocalDataSourceImpl(
         userDao.insertUser(user.toEntity())
     }
 
-    override fun getUser(): Flow<UserDto?> {
-        return userDao.getUser().map { it?.toDto() }
+    override fun getUser(id: Long): Flow<UserDto?> {
+        return userDao.observeUserById(id).map { it?.toDto() }
     }
 
-    override suspend fun clearUser() {
-        userDao.clearUser()
+    override suspend fun deleteUser(id: Long) {
+        userDao.deleteUserById(id)
     }
 }

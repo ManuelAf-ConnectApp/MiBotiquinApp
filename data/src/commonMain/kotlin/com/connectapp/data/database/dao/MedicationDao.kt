@@ -1,15 +1,14 @@
 package com.connectapp.data.database.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.connectapp.data.database.entity.MedicationEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MedicationDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertMedication(medication: MedicationEntity): Long
 
     @Query("SELECT * FROM medications WHERE id = :id")
@@ -18,10 +17,10 @@ interface MedicationDao {
     @Query("SELECT * FROM medications")
     fun getAllMedications(): Flow<List<MedicationEntity>>
 
-    @Query("SELECT * FROM medications WHERE codUser = :codUser")
+    @Query("SELECT * FROM medications WHERE codUser = :codUser AND isArchived = 0")
     fun getUserMedicationsByCodUser(codUser: String): Flow<List<MedicationEntity>>
 
-    @Query("SELECT * FROM medications WHERE codUser = :codUser")
+    @Query("SELECT * FROM medications WHERE codUser = :codUser AND isArchived = 0")
     suspend fun getUserMedicationsByCodUserOnce(codUser: String): List<MedicationEntity>
 
     @Query("SELECT * FROM medications")
@@ -29,4 +28,7 @@ interface MedicationDao {
 
     @Query("DELETE FROM medications WHERE id = :id")
     suspend fun deleteMedicationById(id: Long)
+
+    @Query("UPDATE medications SET isArchived = 1, isPaused = 1 WHERE id = :id AND codUser = :owner AND isArchived = 0")
+    suspend fun archiveMedication(id: Long, owner: String): Int
 }

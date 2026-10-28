@@ -53,9 +53,10 @@ fun StockScreen(initialMedicationId: Long?, modifier: Modifier = Modifier, onOpe
                 items(state.summaries, key = { it.medicationId }) { summary ->
                     Card(onClick = { viewModel.select(summary.medicationId) }, modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(Dimen20), verticalArrangement = Arrangement.spacedBy(Dimen8)) {
+                            val balanceMinor = summary.balanceMinor
                             Text(summary.medicationName, style = MaterialTheme.typography.titleMedium)
-                            Text(if (summary.balanceMinor == null) stringResource(stock_not_configured)
-                                else "${StockAmounts.format(summary.balanceMinor)} ${stockUnitLabel(summary.unit)}")
+                            Text(if (balanceMinor == null) stringResource(stock_not_configured)
+                                else "${StockAmounts.format(balanceMinor)} ${stockUnitLabel(summary.unit)}")
                             if (summary.isLow) Text(stringResource(stock_low), color = MaterialTheme.colorScheme.error)
                             Text(stockForecastLabel(summary.forecast), style = MaterialTheme.typography.bodyMedium)
                         }
@@ -68,8 +69,9 @@ fun StockScreen(initialMedicationId: Long?, modifier: Modifier = Modifier, onOpe
                     Text(stockUnitLabel(selected.unit), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 item {
-                    if (selected.balanceMinor != null) {
-                        Text(stringResource(stock_current, StockAmounts.format(selected.balanceMinor)), style = MaterialTheme.typography.titleLarge)
+                    val balanceMinor = selected.balanceMinor
+                    if (balanceMinor != null) {
+                        Text(stringResource(stock_current, StockAmounts.format(balanceMinor)), style = MaterialTheme.typography.titleLarge)
                         Text(stringResource(stock_initial, StockAmounts.format(selected.initialMinor!!)))
                         Text(stringResource(stock_threshold_value, StockAmounts.format(selected.lowThresholdMinor!!)))
                         selected.referenceAt?.let { Text(stringResource(stock_reference, doseTimeLabel(it))) }
