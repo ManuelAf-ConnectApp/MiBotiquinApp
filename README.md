@@ -55,30 +55,75 @@ El proyecto sigue los principios de Clean Architecture distribuidos en varios m�
 
 - [x] **Gestión de Medicamentos**: Añadir y seguir dosis, cantidades y duraciones.
 - [x] **Recordatorios**: Notificaciones locales configurables (hora de inicio, dosis/día, aviso previo) implementadas de forma nativa en cada plataforma — `AlarmManager` en Android y `UNUserNotificationCenter` en iOS — a través de la abstracción `domain.manager.NotificationManager`.
-- [x] **Autenticación**: Flujos seguros de Login, Registro y Recuperación de Contraseña.
+- [x] **Acceso local**: Registro e inicio de sesión locales con contraseñas PBKDF2, sesión protegida y recuperación mediante un código de un solo uso generado desde Perfil.
 - [x] **Panel de Control**: Acceso rápido a los horarios diarios de medicación.
 - [x] **Perfil y Ajustes**: Gestionar preferencias de usuario y seguridad de la cuenta.
 - [x] **UI Moderna**: Sistema de diseño Material 3 con soporte para modo oscuro.
 
+## Estado de integración y pruebas
+
+Se han integrado cantidades exactas, tomas persistidas, stock, escáner y recordatorios sobre
+la autenticación local actual. Las sesiones conservan un identificador local estable y
+cerrar sesión no elimina la medicación. El código de recuperación se genera desde Perfil y
+se consume al restablecer la contraseña; no se envían correos ni hay sincronización en la nube.
+Room v11 se ha generado con KSP; las migraciones desde v1 hasta v8 pasan con el
+validador real de Room en iOS. [Validación de migraciones](docs/migration-validation.md).
+
+Validación: 69 pruebas JVM y 77 comprobaciones iOS ejercitadas pasan, además de 11 comprobaciones SQLite.
+La suite iOS registra otro caso de Keychain que retorna sin ejercitar el almacén cuando el
+servicio no está disponible; su aceptación requiere una app firmada. Las cámaras, CIMA real,
+notificaciones y accesibilidad siguen pendientes de prueba en dispositivo.
+No se ha generado un APK nuevo; la última instrucción del usuario limita la ejecución a pruebas.
+
+```sh
+./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest
+./gradlew :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
+python3 scripts/verify_recovery_sql.py
+```
+
 ## 🏁 Primeros Pasos
 
-### Requisitos Previos
-*   Android Studio Ladybug o posterior.
-*   Xcode (para desarrollo iOS).
-*   Plugin de Kotlin Multiplatform.
+### Requisitos previos
+
+El repositorio usa el wrapper de Gradle 9.6.0, Kotlin 2.4.0, Android Gradle Plugin 9.4.1
+y Compose Multiplatform 1.11.1. No instales Gradle globalmente.
+
+* JDK 17 o posterior compatible con Gradle/AGP.
+* Android Studio con Android SDK Platform 37 y el SDK configurado en `local.properties`.
+  Android requiere API 26 o posterior para ejecutar la aplicación.
+* macOS con Xcode para iOS. Configura un equipo de desarrollo en Xcode si quieres probar
+  Keychain o avisos en un dispositivo; no se publica en App Store.
+* Acceso a internet la primera vez que Gradle descargue sus dependencias. El escáner de
+  Android puede descargar su módulo de Google Play services al utilizarse por primera vez.
+
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para las pruebas, convenciones y límites del
+proyecto open source.
 
 ### Construir y Ejecutar
 
 #### Android
-- Desde Android Studio: Selecciona la configuración de ejecución `composeApp`.
-- Desde la Terminal:
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
+
+Abre el proyecto en Android Studio, permite que se complete la sincronización y ejecuta la
+configuración `composeApp` desde el IDE. Para comprobar la lógica sin empaquetar una aplicación:
+
+```sh
+./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest
+python3 scripts/verify_recovery_sql.py
+```
 
 #### iOS
-- Abre el directorio `iosApp` en Xcode y ejecuta el proyecto.
-- O utiliza la configuración de ejecución `iosApp` en Android Studio.
+
+Abre `iosApp/iosApp.xcodeproj` con Xcode, elige un simulador o dispositivo y ejecuta el
+esquema de la aplicación. Las pruebas compartidas se pueden ejecutar sin crear un paquete:
+
+```sh
+./gradlew :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
+```
+
+Las cuentas son locales a cada instalación. La contraseña se comprueba localmente y puedes
+generar un código de recuperación de un solo uso desde Perfil. No se envían correos ni hay
+sincronización en la nube. Consulta [docs/TASKS.md](docs/TASKS.md) para las funciones pendientes
+y [SECURITY.md](SECURITY.md) para informar vulnerabilidades.
 
 ---
 

@@ -8,6 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
+import com.connectapp.commonresources.resources.Res
+import com.connectapp.commonresources.resources.dose_snooze
 import com.connectapp.domain.model.DoseStatus
 import com.connectapp.domain.model.DoseUnit
 import kotlinx.datetime.TimeZone
@@ -58,6 +60,9 @@ fun DoseScreen(eventId: String, modifier: Modifier = Modifier, onStock: (Long) -
                 )
                 OutlinedButton(onClick = { viewModel.resolve(DoseStatus.SKIPPED) }, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(dose_skip))
+                }
+                OutlinedButton(onClick = { viewModel.snooze() }, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(Res.string.dose_snooze))
                 }
             }
         }

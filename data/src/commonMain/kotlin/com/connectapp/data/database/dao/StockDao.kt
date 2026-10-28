@@ -9,6 +9,9 @@ interface StockDao {
     @Query("SELECT * FROM stock_accounts WHERE medicationId = :medicationId AND codUser = :owner")
     suspend fun account(medicationId: Long, owner: String): StockAccountEntity?
 
+    @Query("SELECT * FROM stock_accounts WHERE codUser = :owner ORDER BY medicationId")
+    suspend fun accounts(owner: String): List<StockAccountEntity>
+
     @Insert
     suspend fun insertAccount(account: StockAccountEntity)
 
@@ -17,6 +20,9 @@ interface StockDao {
 
     @Query("SELECT * FROM stock_movements WHERE id = :id AND codUser = :owner")
     suspend fun movement(id: String, owner: String): StockMovementEntity?
+
+    @Query("SELECT * FROM stock_movements WHERE codUser = :owner ORDER BY createdAt, id")
+    suspend fun allMovements(owner: String): List<StockMovementEntity>
 
     @Query("SELECT * FROM stock_movements WHERE medicationId = :medicationId AND codUser = :owner ORDER BY createdAt DESC, id DESC LIMIT 100")
     suspend fun movements(medicationId: Long, owner: String): List<StockMovementEntity>

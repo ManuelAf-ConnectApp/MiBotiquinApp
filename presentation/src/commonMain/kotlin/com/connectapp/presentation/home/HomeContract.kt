@@ -1,13 +1,18 @@
 package com.connectapp.presentation.home
 
+import com.connectapp.domain.model.StockSummary
+import com.connectapp.domain.model.DoseDetail
 import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
+import com.connectapp.presentation.util.UiText
 
 data class HomeState(
     val medications: List<Medication>,
     val user: User?,
     val isLoading: Boolean,
-    val error: String?
+    val stockSummaries: List<StockSummary> = emptyList(),
+    val pendingDoses: List<DoseDetail> = emptyList(),
+    val error: UiText?
 ) {
     companion object {
         val EMPTY_DATA = HomeState(

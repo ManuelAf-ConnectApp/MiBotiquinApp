@@ -50,6 +50,7 @@ class DoseRepositoryTest {
                 return rows.size.toLong()
             }
             override suspend fun get(id: String, owner: String) = rows[id]?.takeIf { it.codUser == owner }
+            override suspend fun all(owner: String) = rows.values.filter { it.codUser == owner }.sortedWith(compareBy({ it.scheduledAt }, { it.id }))
             override suspend fun pending(owner: String, limit: Int) = rows.values.filter { it.codUser == owner && it.status == "PENDING" }.sortedBy { it.scheduledAt }.take(limit)
             override suspend fun resolve(id: String, owner: String, status: String, resolvedAt: Long?, quantityMinor: Long, quantityUnit: String, notes: String, pharmacologicalDose: String): Int {
                 val row = get(id, owner)?.takeIf { it.status == "PENDING" } ?: return 0
@@ -57,15 +58,25 @@ class DoseRepositoryTest {
                 rows[id] = row.copy(status = status, resolvedAt = resolvedAt, quantityMinor = quantityMinor, quantityUnit = quantityUnit, notes = notes, pharmacologicalDose = pharmacologicalDose)
                 return 1
             }
+            override suspend fun snooze(id: String, owner: String, reminderAt: Long): Int {
+                val row = get(id, owner)?.takeIf { it.status == "PENDING" && (it.snoozedUntil ?: it.reminderAt) < reminderAt } ?: return 0
+                rows[id] = row.copy(snoozedUntil = reminderAt)
+                return 1
+            }
         }
         override val medications = object : MedicationDao {
             override suspend fun insertMedication(medication: MedicationEntity): Long { meds[medication.id] = medication; return medication.id }
             override suspend fun getMedicationById(id: Long) = meds[id]
             override fun getAllMedications() = flowOf(meds.values.toList())
-            override fun getUserMedicationsByCodUser(codUser: String) = flowOf(meds.values.filter { it.codUser == codUser })
-            override suspend fun getUserMedicationsByCodUserOnce(codUser: String) = meds.values.filter { it.codUser == codUser }
+            override fun getUserMedicationsByCodUser(codUser: String) = flowOf(meds.values.filter { it.codUser == codUser && !it.isArchived })
+            override suspend fun getUserMedicationsByCodUserOnce(codUser: String) = meds.values.filter { it.codUser == codUser && !it.isArchived }
             override suspend fun getAllMedicationsOnce() = meds.values.toList()
             override suspend fun deleteMedicationById(id: Long) { meds.remove(id); rows.entries.removeAll { it.value.medicationId == id } }
+            override suspend fun archiveMedication(id: Long, owner: String): Int {
+                val med = meds[id]?.takeIf { it.codUser == owner && !it.isArchived } ?: return 0
+                meds[id] = med.copy(isArchived = true, isPaused = true)
+                return 1
+            }
         }
     }
 
@@ -135,5 +146,25 @@ class DoseRepositoryTest {
         assertEquals(recorded.notes, reopened.notes)
         assertEquals(DoseStatus.TAKEN, reopened.status)
         assertIs<AppError.InvalidDose>(repository.resolveDose(id, DoseStatus.PENDING).exceptionOrNull())
+    }
+
+    @Test fun snoozingPersistsTheEffectiveReminderWithoutResolvingOrChangingStock() = runBlocking<Unit> {
+        val store = Store(); val repository = DoseRepositoryImpl(store, Session())
+        val id = repository.planReminders(after, 1).getOrThrow().single().eventId
+        val before = repository.getDose(id).getOrThrow()!!
+        val snoozed = repository.snoozeDose(id, 10).getOrThrow()!!
+        assertEquals(DoseStatus.PENDING, snoozed.status)
+        assertEquals(0, store.transitions)
+        assertTrue(snoozed.reminderAt >= before.reminderAt)
+        assertEquals(snoozed.reminderAt, store.rows.getValue(id).snoozedUntil)
+        assertEquals(snoozed.reminderAt, repository.planReminders(after, 1).getOrThrow().single().reminderAt)
+    }
+
+    @Test fun resolvedDosesRemainInTheAccountHistory() = runBlocking<Unit> {
+        val store = Store(); val repository = DoseRepositoryImpl(store, Session())
+        val events = repository.planReminders(after, 2).getOrThrow()
+        repository.resolveDose(events[0].eventId, DoseStatus.TAKEN).getOrThrow()
+        repository.resolveDose(events[1].eventId, DoseStatus.SKIPPED).getOrThrow()
+        assertEquals(setOf(DoseStatus.TAKEN, DoseStatus.SKIPPED), repository.doseHistory().getOrThrow().map { it.status }.toSet())
     }
 }

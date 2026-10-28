@@ -15,6 +15,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.filled.Schedule
+import com.connectapp.presentation.component.BrandIcon
+import com.connectapp.presentation.component.PrimaryActionButton
+import androidx.compose.material3.OutlinedButton
+import com.connectapp.presentation.dose.doseTimeLabel
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -32,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
+import com.connectapp.commonresources.resources.Res
+import com.connectapp.commonresources.resources.dose_history_title
 import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 import com.connectapp.presentation.home.component.MedicationCard
@@ -44,6 +54,9 @@ fun HomeScreen(
     user: User,
     onNavigateToAddMedication: () -> Unit,
     onNavigateToEditMedication: (Medication) -> Unit,
+    onOpenDose: (String) -> Unit,
+    onStock: () -> Unit,
+    onHistory: () -> Unit,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,7 +82,7 @@ fun HomeScreen(
     }
 
     if (state.isLoading) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = modifier.fillMaxSize()) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     } else {
@@ -79,7 +92,10 @@ fun HomeScreen(
                 .padding(horizontal = Dimen16),
             state = state,
             onIntent = onIntent,
-            onDeleteClick = { medicationToDelete = it }
+            onDeleteClick = { medicationToDelete = it },
+            onOpenDose = onOpenDose,
+            onStock = onStock,
+            onHistory = onHistory
         )
     }
 
@@ -113,6 +129,9 @@ private fun HomeScreenContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
     onDeleteClick: (Medication) -> Unit,
+    onOpenDose: (String) -> Unit,
+    onStock: () -> Unit,
+    onHistory: () -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -132,32 +151,37 @@ private fun HomeScreenContent(
             )
             Spacer(modifier = Modifier.height(Dimen20))
 
-            Button(
-                onClick = { onIntent(HomeIntent.AddMedicationClicked) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(Dimen20)
-                    )
-                    Spacer(modifier = Modifier.width(Dimen8))
-                    Text(text = stringResource(button_add_medication))
-                }
-            }
+            PrimaryActionButton(stringResource(button_add_medication), { onIntent(HomeIntent.AddMedicationClicked) })
+            Spacer(modifier = Modifier.height(Dimen8))
+            OutlinedButton(onClick = onStock, modifier = Modifier.fillMaxWidth()) { Text(stringResource(stock_title)) }
+            OutlinedButton(onClick = onHistory, modifier = Modifier.fillMaxWidth()) { Text(stringResource(Res.string.dose_history_title)) }
             Spacer(modifier = Modifier.height(Dimen16))
 
             state.error?.let { error ->
                 Text(
-                    text = error,
+                    text = error.asString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(Dimen8))
+            }
+        }
+
+        if (state.pendingDoses.isNotEmpty()) {
+            item { Text(stringResource(dose_upcoming), style = MaterialTheme.typography.titleMedium) }
+            items(state.pendingDoses, key = { it.eventId }) { dose ->
+                Card(onClick = { onOpenDose(dose.eventId) }, modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), shape = MaterialTheme.shapes.large) {
+                    Row(Modifier.padding(Dimen16), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimen16)) {
+                        Icon(Icons.Default.Schedule, null, tint = MaterialTheme.colorScheme.primary)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimen4)) {
+                            Text(dose.medicationName, style = MaterialTheme.typography.titleMedium)
+                            Text(doseTimeLabel(dose.scheduledAt), style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
         }
 
@@ -169,11 +193,12 @@ private fun HomeScreenContent(
                         .padding(top = Dimen32),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(home_empty_medications),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.outline
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimen16)) {
+                        BrandIcon(Icons.Default.Add, large = true)
+                        Text(stringResource(home_empty_medications), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(home_empty_description), style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         } else {
@@ -188,6 +213,7 @@ private fun HomeScreenContent(
             items(state.medications) { medication ->
                 MedicationCard(
                     medication = medication,
+                    stock = state.stockSummaries.firstOrNull { it.medicationId == medication.id },
                     onClick = { onIntent(HomeIntent.MedicationClicked(medication)) },
                     onDeleteClick = { onDeleteClick(medication) }
                 )

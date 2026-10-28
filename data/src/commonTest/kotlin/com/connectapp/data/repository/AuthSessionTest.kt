@@ -26,13 +26,20 @@ class AuthSessionTest {
     }
 
     private class Users : UserDao {
-        val user = UserEntity(2, "Test", "User", "test@example.com", "unused", "", "")
+        var user = UserEntity(2, "Test", "User", "test@example.com", "unused", "", "")
         override suspend fun getUserById(id: Long) = user.takeIf { it.id == id }
         override suspend fun getUserByEmail(email: String) = user.takeIf { it.email == email }
         override fun observeUserById(id: Long) = flowOf(user.takeIf { it.id == id })
-        override suspend fun insertUser(user: UserEntity) = error("Unexpected insert")
+        override suspend fun insertUser(user: UserEntity): Long {
+            this.user = user.copy(id = if (user.id == 0L) 3L else user.id)
+            return this.user.id
+        }
         override suspend fun updateUser(user: UserEntity) = error("Unexpected update")
-        override suspend fun upgradePasswordHash(id: Long, expectedPassword: String, passwordHash: String): Int = error("Unused")
+        override suspend fun upgradePasswordHash(id: Long, expectedPassword: String, passwordHash: String): Int {
+            if (user.id != id || user.password != expectedPassword) return 0
+            user = user.copy(password = passwordHash)
+            return 1
+        }
         override suspend fun setRecoveryHash(id: Long, expectedPassword: String, recoveryHash: String): Int = error("Unused")
         override suspend fun consumeRecoveryCode(id: Long, expectedRecoveryHash: String, expectedPassword: String, passwordHash: String, updatedAt: String): Int = error("Unused")
         override suspend fun deleteUserById(id: Long) = error("Unexpected delete")
@@ -68,7 +75,7 @@ class AuthSessionTest {
         assertNull(repository.restoreSession().getOrThrow())
     }
 
-    @Test fun recoveryNeverClaimsToSendEmailOrChangesCredentials() = runBlocking<Unit> {
+    @Test fun localSourceDoesNotClaimToSendRecoveryEmail() = runBlocking<Unit> {
         val local = Local()
         val users = Users()
         val source = AuthRemoteDataSourceImpl(AuthInterceptor(local), users)
@@ -77,5 +84,19 @@ class AuthSessionTest {
         }
         assertEquals("unused", users.user.password)
         assertEquals(1L, local.currentId)
+    }
+
+    @Test fun localSourceHashesRegistrationAndChecksCredentials() = runBlocking<Unit> {
+        val local = Local()
+        val users = Users()
+        val source = AuthRemoteDataSourceImpl(AuthInterceptor(local), users)
+
+        val created = source.register("Ana", "Local", "ana@example.com", "password-123").getOrThrow()
+        assertEquals("ana@example.com", created.email)
+        assertNotEquals("password-123", users.user.password)
+        assertTrue(users.user.password.startsWith("pbkdf2_sha256$"))
+        assertIs<AppError.InvalidCredentials>(source.login("ana@example.com", "wrong-password").exceptionOrNull())
+        assertEquals("ana@example.com", source.login("ana@example.com", "password-123").getOrThrow().email)
+        assertIs<AppError.EmailAlreadyRegistered>(source.register("Ana", "Local", "ana@example.com", "password-123").exceptionOrNull())
     }
 }

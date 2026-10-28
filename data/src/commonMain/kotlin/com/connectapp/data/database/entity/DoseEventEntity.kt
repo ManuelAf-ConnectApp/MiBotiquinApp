@@ -1,5 +1,6 @@
 package com.connectapp.data.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -19,6 +20,7 @@ data class DoseEventEntity(
     val codUser: String,
     val scheduledAt: Long,
     val reminderAt: Long,
+    @ColumnInfo(defaultValue = "NULL") val snoozedUntil: Long? = null,
     val status: String,
     val resolvedAt: Long?,
     val quantityMinor: Long,

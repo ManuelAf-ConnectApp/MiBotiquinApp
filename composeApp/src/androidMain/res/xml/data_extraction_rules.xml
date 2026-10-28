@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    La base de datos (medicación = datos de salud, hashes de contraseñas) y las preferencias
+    (sesión) no deben salir del dispositivo ni en copias en la nube ni en transferencias entre
+    dispositivos. allowBackup="false" no cubre la transferencia entre dispositivos en Android 12+.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+    </device-transfer>
+</data-extraction-rules>

@@ -48,5 +48,23 @@ class DoseViewModel(private val repository: DoseRepository, private val sync: Sy
         }
     }
 
+    fun snooze(minutes: Int = 10) {
+        val current = state.value
+        val dose = current.dose ?: return
+        if (current.loading || dose.status != DoseStatus.PENDING) return
+        mutableState.value = current.copy(loading = true, error = null)
+        job = viewModelScope.launch {
+            repository.snoozeDose(dose.eventId, minutes)
+                .onSuccess {
+                    mutableState.value = DoseState(it, false)
+                    sync()
+                }
+                .onFailure { error ->
+                    val refreshed = repository.getDose(dose.eventId).getOrNull()
+                    mutableState.value = DoseState(refreshed, false, error.asUiText())
+                }
+        }
+    }
+
     fun clear() { job?.cancel(); mutableState.value = DoseState() }
 }

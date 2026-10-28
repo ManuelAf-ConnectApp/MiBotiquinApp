@@ -1,5 +1,11 @@
 package com.connectapp.presentation.settings
 
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,117 +48,42 @@ fun SettingsScreen(
     val viewModel: SettingsViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+
+    // El ViewModel vive tanto como la Activity: se recarga al entrar para no mostrar el
+    // nombre y email de una sesión anterior.
+    LaunchedEffect(Unit) {
+        viewModel.onIntent(SettingsIntent.LoadSettings)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToProfile -> onNavigateToProfile()
+                SettingsEffect.ShowPrivacyInfo -> showPrivacyDialog = true
                 is SettingsEffect.ShowMessage -> onShowMessage(effect.message)
             }
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(Dimen16),
-            verticalArrangement = Arrangement.spacedBy(Dimen8)
-        ) {
-            item {
-                ProfileHeader(
-                    name = state.userName,
-                    email = state.userEmail,
-                    onEditClick = { viewModel.onIntent(SettingsIntent.EditProfileClicked) }
-                )
-            }
-
-            item { SectionHeader(title = stringResource(settings_section_account)) }
-            item {
-                SettingsRow(
-                    icon = Icons.Default.Person,
-                    title = stringResource(settings_item_personal_info),
-                    onClick = { viewModel.onIntent(SettingsIntent.EditProfileClicked) }
-                )
-            }
-            item {
-                SettingsRow(
-                    icon = Icons.Default.Lock,
-                    title = stringResource(settings_item_security),
-                    onClick = { viewModel.onIntent(SettingsIntent.SecurityClicked) }
-                )
-            }
-
-            item { SectionHeader(title = stringResource(settings_section_preferences)) }
-            item {
-                SettingsSwitchRow(
-                    icon = Icons.Default.Notifications,
-                    title = stringResource(settings_item_notifications),
-                    checked = state.notificationsEnabled,
-                    onCheckedChange = { viewModel.onIntent(SettingsIntent.NotificationsToggled(it)) }
-                )
-            }
-            item {
-                SettingsSwitchRow(
-                    icon = Icons.Default.DarkMode,
-                    title = stringResource(settings_item_dark_mode),
-                    checked = state.darkModeEnabled,
-                    onCheckedChange = { viewModel.onIntent(SettingsIntent.DarkModeToggled(it)) }
-                )
-            }
-
-            item { SectionHeader(title = stringResource(settings_section_more)) }
-            item {
-                SettingsRow(
-                    icon = Icons.Default.Info,
-                    title = stringResource(settings_item_about),
-                    subtitle = stringResource(settings_item_version, state.appVersion),
-                    onClick = { showAboutDialog = true }
-                )
-            }
-            item {
-                SettingsRow(
-                    icon = Icons.Default.Description,
-                    title = stringResource(settings_item_privacy),
-                    onClick = { viewModel.onIntent(SettingsIntent.PrivacyPolicyClicked) }
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(Dimen24)) }
-
-            state.errorMessage?.let { errorMessage ->
-                item {
-                    Text(
-                        text = errorMessage.asString(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = Dimen8)
-                    )
-                }
-            }
-
-            item {
-                if (state.isLoading) {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.onIntent(SettingsIntent.LogoutClicked) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
-                        Spacer(modifier = Modifier.width(Dimen8))
-                        Text(stringResource(logout))
-                    }
-                }
-            }
-        }
-    }
+    SettingsScreenContent(
+        modifier = modifier, state = state,
+        onProfile = { viewModel.onIntent(SettingsIntent.EditProfileClicked) },
+        onSecurity = { viewModel.onIntent(SettingsIntent.SecurityClicked) },
+        onNotifications = { viewModel.onIntent(SettingsIntent.NotificationsToggled(it)) },
+        onDarkMode = { viewModel.onIntent(SettingsIntent.DarkModeToggled(it)) },
+        onAbout = { showAboutDialog = true },
+        onPrivacy = { viewModel.onIntent(SettingsIntent.PrivacyPolicyClicked) },
+        onNotificationDiagnostics = { viewModel.onIntent(SettingsIntent.NotificationDiagnosticsClicked) },
+        onLogout = { viewModel.onIntent(SettingsIntent.LogoutClicked) }
+    )
+    if (showPrivacyDialog) AlertDialog(
+        onDismissRequest = { showPrivacyDialog = false },
+        title = { Text(stringResource(settings_item_privacy)) },
+        text = { Text(stringResource(privacy_local_information), modifier = Modifier.verticalScroll(rememberScrollState())) },
+        confirmButton = { TextButton(onClick = { showPrivacyDialog = false }) { Text(stringResource(close)) } }
+    )
 
     if (showAboutDialog) {
         AboutDialog(onDismiss = { showAboutDialog = false })
@@ -192,7 +123,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Dimen16)
             ) {
@@ -261,64 +192,40 @@ private fun AboutDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun ProfileHeader(
-    name: String,
-    email: String,
-    onEditClick: () -> Unit
+internal fun SettingsScreenContent(
+    modifier: Modifier = Modifier, state: SettingsState,
+    onProfile: () -> Unit, onSecurity: () -> Unit,
+    onNotifications: (Boolean) -> Unit, onDarkMode: (Boolean) -> Unit,
+    onAbout: () -> Unit, onPrivacy: () -> Unit, onNotificationDiagnostics: () -> Unit = {}, onLogout: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Dimen16),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(Dimen16)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LazyColumn(
+            Modifier.widthIn(max = Dimen560).fillMaxWidth(), contentPadding = PaddingValues(Dimen24)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(Dimen64)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                if (name.isNotBlank()) {
-                    Text(
-                        text = name.trim().take(1).uppercase(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+            item { SectionHeader(stringResource(settings_section_account)) }
+            item { SettingsRow(Icons.Default.PersonOutline, stringResource(settings_item_personal_info), stringResource(settings_profile_subtitle), onProfile) }
+            item { SettingsRow(Icons.Default.Shield, stringResource(settings_item_security), stringResource(settings_security_subtitle), onSecurity) }
+            item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)) }
+            item { SectionHeader(stringResource(settings_section_preferences)) }
+            item { SettingsSwitchRow(Icons.Default.NotificationsNone, stringResource(settings_item_notifications),
+                stringResource(settings_notifications_subtitle), state.notificationsEnabled, onNotifications) }
+            item { SettingsRow(Icons.Default.BugReport, "Diagnóstico de avisos", state.notificationDiagnostic ?: "Comprueba permiso, alarmas y avisos programados", onNotificationDiagnostics) }
+            item { SettingsSwitchRow(Icons.Default.DarkMode, stringResource(settings_item_dark_mode),
+                stringResource(settings_theme_subtitle), state.darkModeEnabled, onDarkMode) }
+            item { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)) }
+            item { SectionHeader(stringResource(settings_section_more)) }
+            item { SettingsRow(Icons.Default.Info, stringResource(settings_item_about), stringResource(settings_item_version, state.appVersion), onAbout) }
+            item { SettingsRow(Icons.Default.PrivacyTip, stringResource(settings_item_privacy), stringResource(settings_privacy_subtitle), onPrivacy) }
+            item { Spacer(Modifier.height(Dimen24)) }
+            state.errorMessage?.let { error -> item { Text(error.asString(), color = MaterialTheme.colorScheme.error) } }
+            item {
+                OutlinedButton(onLogout, modifier = Modifier.fillMaxWidth().heightIn(min = Dimen56), enabled = !state.isLoading,
+                    shape = CircleShape, colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                    if (state.isLoading) CircularProgressIndicator(Modifier.size(Dimen20), strokeWidth = Dimen2)
+                    else Icon(Icons.AutoMirrored.Filled.Logout, null)
+                    Spacer(Modifier.width(Dimen12))
+                    Text(stringResource(logout))
                 }
-            }
-
-            Spacer(modifier = Modifier.width(Dimen16))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(edit_profile))
             }
         }
     }
@@ -326,104 +233,44 @@ private fun ProfileHeader(
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
+    Text(title.uppercase(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = Dimen16, bottom = Dimen8)
-    )
+        modifier = Modifier.padding(top = Dimen24, bottom = Dimen12).semantics { heading() })
 }
 
 @Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    onClick: (() -> Unit)? = null
-) {
-    val content: @Composable () -> Unit = {
-        Row(
-            modifier = Modifier
-                .padding(vertical = Dimen12, horizontal = Dimen4)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(Dimen24)
-            )
-            Spacer(modifier = Modifier.width(Dimen16))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            if (onClick != null) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.outline
-                )
-            }
-        }
+private fun SettingsIcon(icon: ImageVector) {
+    Surface(Modifier.size(Dimen48), color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.primary, shape = MaterialTheme.shapes.large) {
+        Box(contentAlignment = Alignment.Center) { Icon(icon, null, Modifier.size(Dimen24)) }
     }
+}
 
-    if (onClick != null) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            content()
-        }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            content()
+@Composable
+private fun SettingsRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    Surface(onClick, Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
+        Row(Modifier.padding(vertical = Dimen16), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimen16)) {
+            SettingsIcon(icon)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimen4)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
-private fun SettingsSwitchRow(
-    icon: ImageVector,
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .padding(vertical = Dimen8, horizontal = Dimen4)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Dimen24)
-        )
-        Spacer(modifier = Modifier.width(Dimen16))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
+private fun SettingsSwitchRow(icon: ImageVector, title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().toggleable(checked, role = Role.Switch, onValueChange = onChange)
+        .padding(vertical = Dimen16), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimen16)) {
+        SettingsIcon(icon)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimen4)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked, onCheckedChange = null)
     }
 }

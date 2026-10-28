@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import com.connectapp.commonresources.*
 import org.jetbrains.compose.resources.stringResource
@@ -34,6 +35,15 @@ fun ForgotPasswordScreen(
         }
     }
 
+    ForgotPasswordScreenContent(modifier, state, onIntent)
+}
+
+@Composable
+fun ForgotPasswordScreenContent(
+    modifier: Modifier = Modifier,
+    state: ForgotPasswordState,
+    onIntent: (ForgotPasswordIntent) -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -54,7 +64,7 @@ fun ForgotPasswordScreen(
         Spacer(modifier = Modifier.height(Dimen16))
 
         Text(
-            text = stringResource(forgot_password_instruction),
+            text = stringResource(recovery_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.outline,
             textAlign = TextAlign.Center
@@ -62,20 +72,9 @@ fun ForgotPasswordScreen(
 
         Spacer(modifier = Modifier.height(Dimen32))
 
-        OutlinedTextField(
-            value = state.email,
-            onValueChange = { onIntent(ForgotPasswordIntent.EmailChanged(it)) },
-            label = { Text(stringResource(label_email)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-        )
-
-        Spacer(modifier = Modifier.height(Dimen32))
-
         if (state.isLoading) {
             CircularProgressIndicator()
-        } else if (state.isEmailSent) {
+        } else if (state.isReset) {
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -91,15 +90,23 @@ fun ForgotPasswordScreen(
                 )
             }
         } else {
+            OutlinedTextField(value = state.email, onValueChange = { onIntent(ForgotPasswordIntent.EmailChanged(it)) }, label = { Text(stringResource(label_email)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+            Spacer(modifier = Modifier.height(Dimen12))
+            OutlinedTextField(value = state.code, onValueChange = { onIntent(ForgotPasswordIntent.CodeChanged(it)) }, label = { Text(stringResource(recovery_code_title)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Spacer(modifier = Modifier.height(Dimen12))
+            OutlinedTextField(value = state.password, onValueChange = { onIntent(ForgotPasswordIntent.PasswordChanged(it)) }, label = { Text(stringResource(recovery_new_password)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+            Spacer(modifier = Modifier.height(Dimen12))
+            OutlinedTextField(value = state.confirmPassword, onValueChange = { onIntent(ForgotPasswordIntent.ConfirmPasswordChanged(it)) }, label = { Text(stringResource(label_confirm_password)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+            Spacer(modifier = Modifier.height(Dimen32))
             Button(
-                onClick = { onIntent(ForgotPasswordIntent.SendEmailClicked) },
+                onClick = { onIntent(ForgotPasswordIntent.ResetClicked) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimen50),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    stringResource(button_send_reset_link),
+                    stringResource(recovery_reset),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
