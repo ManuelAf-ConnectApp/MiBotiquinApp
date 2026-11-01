@@ -36,27 +36,28 @@ the dose is recorded without backfilling stock. See stock-validation.md.
 
 ## Executed checks
 
-- `python3 scripts/run_domain_checks.py`: 46 Kotlin/JUnit tests passed across the current blocks. The real dose
-  repository is exercised against a serialized in-memory data source, including competing
-  resolutions, account isolation, stale schedules and unchanged historical quantities.
-- `python3 scripts/verify_recovery_sql.py`: eleven checks passed using SQL extracted from
-  production sources. Tests include the migration to v10, foreign keys, owner filtering,
-  immutable final resolution and 16 concurrent SQLite confirm/skip requests with one winner.
-- Android alarm/notification adapters compile against cached Android SDK 37.1, AndroidX Core and Koin dependencies with the local Kotlin compiler. This is a source-level check, not an APK build.
-- Resource XML parsing and matching localization keys; `git diff --check`.
-
-These checks do not compile Compose, run Room KSP, build an APK/framework or execute Android/iOS framework code.
-The following native matrix remains unverified in this environment.
-
-## Build checks
+- The full data/domain Gradle suites pass on Android JVM host and the iOS simulator:
+  68 JVM checks and 72 exercised iOS checks. One additional Keychain test returns early
+  when the unsigned test environment lacks Keychain; signed-app acceptance remains pending.
+- Six synchronization regressions verify enabled events, cancellation without a session or
+  when disabled, account changes during planning, preference changes during planning,
+  cancellation despite planning failure, and retaining alarms on transient failure while enabled.
+- Fixed a race where disabling notifications during planning could still schedule the old
+  result. Synchronization now rechecks the preference before updating platform reminders.
+- Eleven auxiliary SQLite checks pass for migrations, foreign keys, owner filtering,
+  immutable dose resolution and concurrent stock/event transactions.
+- Room KSP generated v11; real Room validates migration fixtures in iOS. See
+  [migration validation](migration-validation.md) for evidence and limits.
 
 ```sh
-./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest :composeApp:assembleDebug
+./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest
 ./gradlew :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
+python3 scripts/verify_recovery_sql.py
+python3 scripts/generate_migration_fixtures.py --check
 ```
 
-Build and run the iOS application from Xcode as well. Generate and review the current Room
-v11 schema with KSP. Preserve the already generated v8 schema; do not invent schema hashes.
+These commands do not generate an APK. Native notification delivery and UI acceptance
+remain separate from repository, migration and synchronization tests.
 
 ## Manual acceptance matrix — Android and iOS
 
@@ -80,7 +81,7 @@ near-future reminder times. Do not use real health information in screenshots or
 | Deny notification permission | No expectation of a system alert; events remain accessible from Home |
 | Reboot/change device clock/timezone on Android | Future alarms are recalculated; stale events cannot be confirmed |
 | Resume the iOS app after a long absence | The bounded upcoming notification window is replenished |
-| Upgrade a v8 database with medicines | User/medication data survive migrations through v9 to v10 |
+| Upgrade a v8 database with medicines | User/medication data survive migrations through v9/v10 to v11 |
 
 ## Limits and remaining work
 
@@ -97,4 +98,4 @@ near-future reminder times. Do not use real health information in screenshots or
   add failures are not yet exposed as a persistent diagnostic screen.
 - Stock ledger integration is implemented in v11: it consumes only a first successful
   Taken transition and records a unique event id in the same transaction. Native acceptance
-  and Room KSP schema validation still remain pending.
+  remains pending; Room KSP and iOS migration validation pass with historical-schema fixtures.

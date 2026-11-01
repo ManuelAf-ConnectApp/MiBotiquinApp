@@ -14,9 +14,15 @@ interface DoseEventDao {
     @Query("SELECT * FROM dose_events WHERE id = :id AND codUser = :owner")
     suspend fun get(id: String, owner: String): DoseEventEntity?
 
+    @Query("SELECT * FROM dose_events WHERE codUser = :owner ORDER BY scheduledAt, id")
+    suspend fun all(owner: String): List<DoseEventEntity>
+
     @Query("SELECT * FROM dose_events WHERE codUser = :owner AND status = 'PENDING' ORDER BY scheduledAt LIMIT :limit")
     suspend fun pending(owner: String, limit: Int): List<DoseEventEntity>
 
     @Query("UPDATE dose_events SET status = :status, resolvedAt = :resolvedAt, quantityMinor = :quantityMinor, quantityUnit = :quantityUnit, notes = :notes, pharmacologicalDose = :pharmacologicalDose WHERE id = :id AND codUser = :owner AND status = 'PENDING'")
     suspend fun resolve(id: String, owner: String, status: String, resolvedAt: Long?, quantityMinor: Long, quantityUnit: String, notes: String, pharmacologicalDose: String): Int
+
+    @Query("UPDATE dose_events SET snoozedUntil = :reminderAt WHERE id = :id AND codUser = :owner AND status = 'PENDING' AND COALESCE(snoozedUntil, reminderAt) < :reminderAt")
+    suspend fun snooze(id: String, owner: String, reminderAt: Long): Int
 }

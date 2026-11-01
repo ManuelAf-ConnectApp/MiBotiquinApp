@@ -22,6 +22,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import com.connectapp.domain.model.DoseQuantity
+import com.connectapp.domain.model.DoseUnit
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
@@ -58,7 +60,7 @@ fun DosesPerDayDropdown(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selectedDoses.toString(),
+            value = if (selectedDoses in 1..10) selectedDoses.toString() else stringResource(scan_choose_frequency),
             onValueChange = {},
             readOnly = true,
             label = { Text(stringResource(label_doses_per_day)) },
@@ -94,7 +96,9 @@ fun QuantityInput(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val units = listOf(stringResource(unit_pills), stringResource(unit_ml))
+    val units = DoseUnit.entries
+    val selectedUnit = DoseUnit.fromStored(unit)
+    val invalid = quantity.isNotBlank() && (selectedUnit == null || DoseQuantity.parse(quantity, selectedUnit) == null)
 
     Row(
         modifier = modifier,
@@ -104,6 +108,8 @@ fun QuantityInput(
             value = quantity,
             onValueChange = { onQuantityChanged(it) },
             label = { Text(stringResource(label_quantity_per_dose)) },
+            isError = invalid,
+            supportingText = { Text(stringResource(if (selectedUnit == DoseUnit.TABLET) quantity_tablet_help else quantity_ml_help)) },
             modifier = Modifier.weight(1f),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true
@@ -115,7 +121,11 @@ fun QuantityInput(
             modifier = Modifier.weight(1f)
         ) {
             OutlinedTextField(
-                value = unit,
+                value = when (selectedUnit) {
+                    DoseUnit.TABLET -> stringResource(unit_pills)
+                    DoseUnit.MILLILITER -> stringResource(unit_ml)
+                    null -> unit
+                },
                 onValueChange = {},
                 readOnly = true,
                 label = { Text(stringResource(com.connectapp.commonresources.label_unit)) },
@@ -132,9 +142,9 @@ fun QuantityInput(
             ) {
                 units.forEach { unitOption ->
                     DropdownMenuItem(
-                        text = { Text(unitOption) },
+                        text = { Text(stringResource(if (unitOption == DoseUnit.TABLET) unit_pills else unit_ml)) },
                         onClick = {
-                            onUnitChanged(unitOption)
+                            onUnitChanged(unitOption.code)
                             expanded = false
                         }
                     )
@@ -152,7 +162,7 @@ fun ReminderTimeDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val options = listOf(10, 20, 30, 40, 50)
+    val options = listOf(0, 10, 20, 30, 40, 50)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -195,11 +205,6 @@ fun StartTimeInput(
     modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState(
-        initialHour = hour,
-        initialMinute = minute,
-        is24Hour = true
-    )
 
     val formattedTime = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
 
@@ -213,7 +218,7 @@ fun StartTimeInput(
             IconButton(onClick = { showDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.AccessTime,
-                    contentDescription = null
+                    contentDescription = stringResource(label_start_time)
                 )
             }
         },
@@ -221,14 +226,15 @@ fun StartTimeInput(
     )
 
     if (showDialog) {
+        val dialogState = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = true)
         TimePickerDialog(
             onDismiss = { showDialog = false },
             onConfirm = {
-                onTimeSelected(timePickerState.hour, timePickerState.minute)
+                onTimeSelected(dialogState.hour, dialogState.minute)
                 showDialog = false
             }
         ) {
-            TimePicker(state = timePickerState)
+            TimePicker(state = dialogState)
         }
     }
 }
@@ -243,15 +249,11 @@ fun DateInput(
     modifier: Modifier = Modifier
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = selectedDate,
-        selectableDates = selectableDates
-    )
-
     // Basic date formatting for display
     val formattedDate = selectedDate?.let {
+        // Medianoche UTC del día elegido en el DatePicker: se formatea en UTC.
         val date = Instant.fromEpochMilliseconds(it)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .toLocalDateTime(TimeZone.UTC)
         "${date.day.toString().padStart(2, '0')}/${date.month.number.toString().padStart(2, '0')}/${date.year}"
     } ?: ""
 
@@ -265,7 +267,7 @@ fun DateInput(
             IconButton(onClick = { showDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
-                    contentDescription = null
+                    contentDescription = stringResource(label)
                 )
             }
         },
@@ -273,6 +275,9 @@ fun DateInput(
     )
 
     if (showDialog) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate, selectableDates = selectableDates
+        )
         DatePickerDialog(
             onDismissRequest = { showDialog = false },
             confirmButton = {

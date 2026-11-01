@@ -8,6 +8,7 @@ data class SettingsState(
     val userEmail: String = "",
     val notificationsEnabled: Boolean = true,
     val darkModeEnabled: Boolean = false,
-    val appVersion: String = "1.0.1",
+    val appVersion: String = "—",
+    val notificationDiagnostic: String? = null,
     val errorMessage: UiText? = null
 )

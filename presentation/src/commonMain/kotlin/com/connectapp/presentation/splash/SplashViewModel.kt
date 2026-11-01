@@ -1,6 +1,6 @@
 package com.connectapp.presentation.splash
 
-import com.connectapp.domain.usecase.GetCurrentUserUseCase
+import com.connectapp.domain.usecase.RestoreSessionUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class SplashViewModel(
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: RestoreSessionUseCase
 ) : ViewModel() {
 
     private val _effect = MutableSharedFlow<SplashEffect>()

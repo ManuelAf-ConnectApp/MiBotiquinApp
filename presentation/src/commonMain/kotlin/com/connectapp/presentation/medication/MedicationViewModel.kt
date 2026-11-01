@@ -2,10 +2,11 @@ package com.connectapp.presentation.medication
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.connectapp.domain.model.Medication
+import com.connectapp.domain.model.DoseUnit
+import com.connectapp.domain.validator.MedicationRules
+import com.connectapp.commonresources.error_invalid_medication
+import com.connectapp.presentation.util.UiText
 import com.connectapp.domain.usecase.SaveMedicationUseCase
-import com.connectapp.domain.usecase.SaveNotificationUseCase
-import com.connectapp.presentation.notification.NotificationsController
 import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MedicationViewModel(
-    private val saveMedicationUseCase: SaveMedicationUseCase,
-    private val saveNotificationUseCase: SaveNotificationUseCase,
-    private val notificationsController: NotificationsController
+    private val saveMedicationUseCase: SaveMedicationUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MedicationState())
@@ -31,14 +30,13 @@ class MedicationViewModel(
     private val _effects = MutableSharedFlow<MedicationEffect>()
     val effects: SharedFlow<MedicationEffect> get() = _effects.asSharedFlow()
 
-    // Wait, the original had:
-    // private val _effects = MutableSharedFlow<MedicationEffect>()
-    // val effects: SharedFlow<MedicationEffect> get() = _effects.asSharedFlow()
-
-    // I will just use the correct one.
-
     fun onIntent(intent: MedicationIntent) {
         when (intent) {
+            is MedicationIntent.Prefill -> _state.update {
+                MedicationState(user = it.user, name = intent.product.name, catalogueCode = intent.product.nationalCode,
+                    catalogueName = intent.product.name, catalogueRetrievedAt = intent.product.retrievedAt,
+                    quantityUnit = "", dosesPerDay = 0)
+            }
             is MedicationIntent.OnInitUserData -> {
                 _state.update { it.copy(user = intent.user) }
             }
@@ -50,14 +48,21 @@ class MedicationViewModel(
                         id = med.id,
                         name = med.name,
                         dosesPerDay = med.dosesPerDay,
-                        quantity = med.quantity.toString(),
-                        quantityUnit = med.quantityUnit,
+                        quantity = med.doseQuantity?.toDecimalString() ?: med.quantity.toString(),
+                        quantityUnit = DoseUnit.fromStored(med.quantityUnit)?.code ?: med.quantityUnit,
+                        isIndefinite = med.isIndefinite,
+                        isPaused = med.isPaused,
+                        notes = med.notes,
+                        pharmacologicalDose = med.pharmacologicalDose,
+                        catalogueCode = med.catalogueCode, catalogueName = med.catalogueName, catalogueRetrievedAt = med.catalogueRetrievedAt,
                         durationDays = med.durationDays.toString(),
                         startDate = med.startDate,
                         endDate = med.endDate,
                         reminderMinutes = med.reminderMinutes,
                         startTimeHour = med.startTimeHour,
-                        startTimeMinute = med.startTimeMinute
+                        startTimeMinute = med.startTimeMinute,
+                        customSchedule = med.customSchedule,
+                        weekdaySchedule = med.weekdaySchedule
                     )
                 }
             }
@@ -81,42 +86,22 @@ class MedicationViewModel(
             }
 
             is MedicationIntent.QuantityUnitChanged -> {
-                _state.update { it.copy(quantityUnit = intent.unit) }
-            }
-
-            is MedicationIntent.StartDateChanged -> {
                 _state.update {
-                    val newStartDate = intent.date
-                    val currentEndDate = it.endDate
-                    val correctedEndDate =
-                        if (newStartDate != null && currentEndDate != null && currentEndDate < newStartDate) {
-                            null
-                        } else {
-                            currentEndDate
-                        }
-                    it.copy(
-                        startDate = newStartDate,
-                        endDate = correctedEndDate,
-                        durationDays = calculateDuration(newStartDate, correctedEndDate)
-                    )
+                    if (it.quantityUnit == intent.unit) it else it.copy(quantityUnit = intent.unit, quantity = "")
                 }
             }
 
-            is MedicationIntent.EndDateChanged -> {
-                _state.update {
-                    val currentStartDate = it.startDate
-                    val newEndDate = intent.date
-                    val correctedEndDate =
-                        if (currentStartDate != null && newEndDate != null && newEndDate < currentStartDate) {
-                            currentStartDate // Or null, but the picker should prevent this.
-                        } else {
-                            newEndDate
-                        }
-                    it.copy(
-                        endDate = correctedEndDate,
-                        durationDays = calculateDuration(it.startDate, correctedEndDate)
-                    )
-                }
+            is MedicationIntent.IndefiniteChanged -> _state.update {
+                it.copy(isIndefinite = intent.enabled, endDate = null, durationDays = "")
+            }
+            is MedicationIntent.PausedChanged -> _state.update { it.copy(isPaused = intent.paused) }
+            is MedicationIntent.NotesChanged -> _state.update { it.copy(notes = intent.notes) }
+            is MedicationIntent.PharmacologicalDoseChanged -> _state.update { it.copy(pharmacologicalDose = intent.dose) }
+            is MedicationIntent.StartDateChanged -> _state.update {
+                it.copy(startDate = intent.date, durationDays = calculateDuration(intent.date, it.endDate))
+            }
+            is MedicationIntent.EndDateChanged -> _state.update {
+                it.copy(endDate = intent.date, durationDays = calculateDuration(it.startDate, intent.date))
             }
 
             is MedicationIntent.ReminderMinutesChanged -> {
@@ -131,30 +116,22 @@ class MedicationViewModel(
                     )
                 }
             }
+            is MedicationIntent.CustomScheduleChanged -> _state.update { it.copy(customSchedule = intent.value) }
+            is MedicationIntent.WeekdayScheduleChanged -> _state.update { it.copy(weekdaySchedule = intent.value) }
 
             MedicationIntent.SaveClicked -> {
                 val stateValue = _state.value
-                val medication = Medication(
-                    id = stateValue.id,
-                    name = stateValue.name,
-                    codUser = stateValue.user?.id ?: "",
-                    dosesPerDay = stateValue.dosesPerDay,
-                    quantity = stateValue.quantity.toDoubleOrNull() ?: 0.0,
-                    quantityUnit = stateValue.quantityUnit,
-                    durationDays = stateValue.durationDays.toIntOrNull() ?: 0,
-                    startDate = stateValue.startDate,
-                    endDate = stateValue.endDate,
-                    reminderMinutes = stateValue.reminderMinutes,
-                    startTimeHour = stateValue.startTimeHour,
-                    startTimeMinute = stateValue.startTimeMinute
-                )
+                if (stateValue.isLoading) return
+                val medication = stateValue.toMedication()
+                if (medication == null || !MedicationRules.isValid(medication)) {
+                    _state.update { it.copy(errorMessage = UiText.StringRes(error_invalid_medication)) }
+                    return
+                }
+                _state.update { it.copy(isLoading = true, errorMessage = null) }
                 viewModelScope.launch {
-                    _state.update { it.copy(isLoading = true, errorMessage = null) }
                     saveMedicationUseCase(medication)
-                        .onSuccess { savedMedication ->
-                            if (notificationsController.notificationsEnabled.value) {
-                                saveNotificationUseCase(savedMedication)
-                            }
+                        .onSuccess {
+                            // SaveMedicationUseCase ya re-sincroniza los recordatorios.
                             _state.update { it.copy(isLoading = false) }
                             emitEffect(MedicationEffect.NavigateBack)
                         }
@@ -171,13 +148,8 @@ class MedicationViewModel(
         }
     }
 
-    private fun calculateDuration(start: Long?, end: Long?): String {
-        if (start == null || end == null) return ""
-        val diff = end - start
-        if (diff < 0) return "0"
-        val days = (diff / (1000 * 60 * 60 * 24)) + 1
-        return days.toString()
-    }
+    private fun calculateDuration(start: Long?, end: Long?): String =
+        MedicationRules.inclusiveDuration(start, end)?.toString() ?: ""
 
     private fun emitEffect(effect: MedicationEffect) {
         viewModelScope.launch {

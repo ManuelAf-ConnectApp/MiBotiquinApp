@@ -5,8 +5,19 @@ import android.content.SharedPreferences
 import com.connectapp.domain.manager.PreferenceStorage
 
 class AndroidPreferenceStorage(context: Context) : PreferenceStorage {
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences("pharma_control_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences("MiBotiquinApp_prefs", Context.MODE_PRIVATE)
+
+    init {
+        val legacy = context.getSharedPreferences("pharma_control_prefs", Context.MODE_PRIVATE)
+        if (prefs.all.isEmpty() && legacy.all.isNotEmpty()) {
+            prefs.edit().also { editor ->
+                legacy.all.forEach { (key, value) -> when (value) {
+                    is String -> editor.putString(key, value)
+                    is Boolean -> editor.putBoolean(key, value)
+                } }
+            }.apply()
+        }
+    }
 
     override fun getString(key: String): String? = prefs.getString(key, null)
 

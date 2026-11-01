@@ -1,11 +1,15 @@
 package com.connectapp.presentation.component
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.connectapp.commonresources.*
 import com.connectapp.presentation.navigation.NavigationRoute
@@ -40,6 +44,7 @@ fun CustomBottomBar(
             icon = Icons.Default.Home,
             label = nav_home
         ),
+        BottomNavItem(NavigationRoute.ScanRoute, Icons.Default.QrCodeScanner, nav_scan),
         BottomNavItem(
             route = NavigationRoute.ProfileRoute(),
             icon = Icons.Default.Person,
@@ -52,9 +57,11 @@ fun CustomBottomBar(
         )
     )
 
+    Column {
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = Dimen4 // Elevación sutil para separar del contenido
+        tonalElevation = Dimen0 // Elevación sutil para separar del contenido
     ) {
         navItems.forEach { item ->
             // HomeRoute y ProfileRoute llevan el usuario logueado como parámetro, así que no
@@ -70,7 +77,8 @@ fun CustomBottomBar(
                 label = { 
                     Text(
                         text = stringResource(item.label),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     ) 
                 },
                 icon = {
@@ -86,12 +94,14 @@ fun CustomBottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = Color.Transparent,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
+    }
     }
 }

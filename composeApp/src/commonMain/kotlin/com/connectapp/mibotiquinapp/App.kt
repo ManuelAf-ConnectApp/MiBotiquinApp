@@ -9,6 +9,7 @@ import com.connectapp.presentation.MainScreen
 import com.connectapp.presentation.theme.AppDarkColorScheme
 import com.connectapp.presentation.theme.AppLightColorScheme
 import com.connectapp.presentation.theme.AppTypography
+import com.connectapp.presentation.theme.AppShapes
 import com.connectapp.presentation.theme.ThemeController
 import org.koin.compose.koinInject
 
@@ -19,7 +20,8 @@ fun App() {
 
     MaterialTheme(
         colorScheme = if (isDarkTheme) AppDarkColorScheme else AppLightColorScheme,
-        typography = AppTypography
+        typography = AppTypography,
+        shapes = AppShapes
     ) {
         MainScreen()
     }

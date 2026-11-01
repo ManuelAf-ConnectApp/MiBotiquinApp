@@ -1,20 +1,28 @@
 package com.connectapp.presentation.medication
 
+import com.connectapp.domain.model.CatalogPresentation
 import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 
 sealed interface MedicationIntent {
 
     data class OnInitUserData(val user: User) : MedicationIntent
+    data class Prefill(val product: CatalogPresentation) : MedicationIntent
     data class LoadMedication(val medication: Medication) : MedicationIntent
     data object ClearMedication : MedicationIntent
     data class NameChanged(val name: String) : MedicationIntent
     data class DosesPerDayChanged(val doses: Int) : MedicationIntent
     data class QuantityChanged(val quantity: String) : MedicationIntent
     data class QuantityUnitChanged(val unit: String) : MedicationIntent
+    data class IndefiniteChanged(val enabled: Boolean) : MedicationIntent
+    data class PausedChanged(val paused: Boolean) : MedicationIntent
+    data class NotesChanged(val notes: String) : MedicationIntent
+    data class PharmacologicalDoseChanged(val dose: String) : MedicationIntent
     data class StartDateChanged(val date: Long?) : MedicationIntent
     data class EndDateChanged(val date: Long?) : MedicationIntent
     data class ReminderMinutesChanged(val minutes: Int) : MedicationIntent
     data class StartTimeChanged(val hour: Int, val minute: Int) : MedicationIntent
+    data class CustomScheduleChanged(val value: String) : MedicationIntent
+    data class WeekdayScheduleChanged(val value: String) : MedicationIntent
     data object SaveClicked : MedicationIntent
 }

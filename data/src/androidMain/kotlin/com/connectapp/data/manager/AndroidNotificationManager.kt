@@ -1,35 +1,41 @@
 package com.connectapp.data.manager
 
-import android.app.AlarmManager
 import android.app.NotificationChannel
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.connectapp.data.MedicationAlarmReceiver
 import com.connectapp.domain.manager.NotificationManager
-import com.connectapp.domain.model.Medication
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toInstant
+import com.connectapp.domain.model.DoseReminder
 import android.app.NotificationManager as AndroidNetManager
+import android.app.AlarmManager
+import android.os.Build
+import android.media.AudioAttributes
+import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
+import com.connectapp.domain.model.NotificationDiagnostics
 
 class AndroidNotificationManager(
     private val context: Context
 ) : NotificationManager {
+
+    private companion object {
+        const val PREFS_NAME = "medication_reminders"
+        const val CHANNEL_ID = "medication_reminders_v2"
+        // AlarmManager no permite listar alarmas: se recuerdan los ids programados para poder
+        // cancelar los de medicamentos que ya no deben sonar (borrados, logout, otro usuario...).
+        const val KEY_SCHEDULED_IDS = "scheduled_medication_ids"
+    }
 
     init {
         createNotificationChannel()
     }
 
     override fun showNotification(title: String, body: String) {
-        val notification = NotificationCompat.Builder(context, "medication_reminders")
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(body)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
             .setAutoCancel(true)
             .build()
 
@@ -44,75 +50,39 @@ class AndroidNotificationManager(
         val channelName = if (isSpanish) "Recordatorios de Medicación" else "Medication Reminders"
 
         val channel = NotificationChannel(
-            "medication_reminders",
+            CHANNEL_ID,
             channelName,
             AndroidNetManager.IMPORTANCE_HIGH
+        )
+        channel.setSound(
+            Settings.System.DEFAULT_NOTIFICATION_URI,
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build()
         )
         val manager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as AndroidNetManager
         manager.createNotificationChannel(channel)
     }
 
-
-    override fun scheduleNotification(medication: Medication) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
-        val intent = Intent(context, MedicationAlarmReceiver::class.java).apply {
-            putExtra("MED_ID", medication.id)
-            putExtra("MED_TITLE", medication.name)
-            val intervalMs = (24L / medication.dosesPerDay) * 3600000L
-            putExtra("INTERVALO_MS", intervalMs)
-            putExtra("FECHA_FIN", medication.endDate ?: 0L)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            medication.id.toInt(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Cálculo riguroso del tiempo de disparo (Fecha + Hora - Recordatorio)
-        val baseDateMillis = medication.startDate ?: System.currentTimeMillis()
-        val timeZone = TimeZone.currentSystemDefault()
-        
-        val localDateTime = Instant.fromEpochMilliseconds(baseDateMillis)
-            .toLocalDateTime(timeZone)
-            
-        val preciseDateTime = kotlinx.datetime.LocalDateTime(
-            year = localDateTime.year,
-            monthNumber = localDateTime.monthNumber,
-            dayOfMonth = localDateTime.dayOfMonth,
-            hour = medication.startTimeHour,
-            minute = medication.startTimeMinute,
-            second = 0,
-            nanosecond = 0
-        )
-        
-        val triggerAtMillis = preciseDateTime.toInstant(timeZone).toEpochMilliseconds() - (medication.reminderMinutes * 60 * 1000L)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-            }
-        } else {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-        }
+    override fun scheduleReminders(reminders: List<DoseReminder>) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val legacyIds = prefs.getStringSet(KEY_SCHEDULED_IDS, emptySet()).orEmpty()
+        legacyIds.forEach { it.toLongOrNull()?.let { id -> MedicationReminderAlarms.cancelLegacy(context, id) } }
+        val previous = prefs.getStringSet("scheduled_dose_ids", emptySet()).orEmpty()
+        val upcoming = reminders.filter { it.reminderAt > System.currentTimeMillis() }
+        val ids = upcoming.map { it.eventId }.toSet()
+        (previous - ids).forEach { MedicationReminderAlarms.cancel(context, it) }
+        upcoming.forEach { MedicationReminderAlarms.schedule(context, it) }
+        prefs.edit().remove(KEY_SCHEDULED_IDS).putStringSet("scheduled_dose_ids", ids).apply()
     }
 
-    override fun cancelNotification(medication: Medication) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, MedicationAlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            medication.id.toInt(),
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+    override fun diagnostics(): NotificationDiagnostics {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val exact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms() else true
+        return NotificationDiagnostics(
+            systemEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled(),
+            exactAlarmsAvailable = exact,
+            scheduledCount = prefs.getStringSet("scheduled_dose_ids", emptySet()).orEmpty().size,
+            detail = "Android"
         )
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
-        }
     }
 }

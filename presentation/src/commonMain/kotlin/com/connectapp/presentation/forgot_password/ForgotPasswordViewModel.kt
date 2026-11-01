@@ -3,7 +3,7 @@ package com.connectapp.presentation.forgot_password
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.connectapp.commonresources.*
-import com.connectapp.domain.usecase.ForgotPasswordUseCase
+import com.connectapp.domain.usecase.ResetPasswordUseCase
 import com.connectapp.presentation.util.UiText
 import com.connectapp.presentation.util.asUiText
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ForgotPasswordViewModel(
-    private val forgotPasswordUseCase: ForgotPasswordUseCase
+    private val resetPasswordUseCase: ResetPasswordUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ForgotPasswordState())
@@ -27,24 +27,32 @@ class ForgotPasswordViewModel(
 
     fun onIntent(intent: ForgotPasswordIntent) {
         when (intent) {
-            is ForgotPasswordIntent.EmailChanged -> _state.update { it.copy(email = intent.email) }
-            ForgotPasswordIntent.SendEmailClicked -> sendEmail()
+            is ForgotPasswordIntent.EmailChanged -> _state.update { it.copy(email = intent.email, errorMessage = null) }
+            is ForgotPasswordIntent.CodeChanged -> _state.update { it.copy(code = intent.code, errorMessage = null) }
+            is ForgotPasswordIntent.PasswordChanged -> _state.update { it.copy(password = intent.password, errorMessage = null) }
+            is ForgotPasswordIntent.ConfirmPasswordChanged -> _state.update { it.copy(confirmPassword = intent.password, errorMessage = null) }
+            ForgotPasswordIntent.ResetClicked -> resetPassword()
             ForgotPasswordIntent.BackToLoginClicked -> emitEffect(ForgotPasswordEffect.NavigateToLogin)
         }
     }
 
-    private fun sendEmail() {
-        if (_state.value.email.isBlank()) {
-            _state.update { it.copy(errorMessage = UiText.StringRes(error_empty_email)) }
+    private fun resetPassword() {
+        val form = _state.value
+        val error = when {
+            form.email.isBlank() || form.code.isBlank() || form.password.isBlank() || form.confirmPassword.isBlank() -> error_mandatory_fields
+            form.password.length < 8 -> error_password_too_short
+            form.password != form.confirmPassword -> error_passwords_not_match
+            else -> null
+        }
+        if (error != null) {
+            _state.update { it.copy(errorMessage = UiText.StringRes(error)) }
             return
         }
-
         _state.update { it.copy(isLoading = true, errorMessage = null) }
-
         viewModelScope.launch {
-            forgotPasswordUseCase(_state.value.email)
+            resetPasswordUseCase(form.email, form.code, form.password)
                 .onSuccess {
-                    _state.update { it.copy(isLoading = false, isEmailSent = true) }
+                    _state.value = ForgotPasswordState(isReset = true)
                 }
                 .onFailure { error ->
                     _state.update { it.copy(isLoading = false, errorMessage = error.asUiText()) }

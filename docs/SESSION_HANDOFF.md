@@ -1,68 +1,76 @@
-# Punto de reanudación
+# Punto de reanudación — 25 de octubre de 2026
 
-El usuario ha pedido guardar todo y continuar el lunes. No hay despliegue ni publicación solicitados.
+## Instrucciones vigentes
 
-## Estado guardado
+- Cierre de sesión: el usuario pide guardar la información y continuar mañana.
+- Proyecto open source, sin despliegues ni publicación en Google Play o Apple App Store.
+- Lista vigente acordada: [TASKS.md](TASKS.md). Sustituye los pendientes orientados a tiendas.
+- Al retomar, consultar esa lista; no se ha elegido todavía una tarea concreta para mañana.
 
-- Recuperación local mediante código de un solo uso, sesiones e aislamiento de medicación.
-- Cantidades exactas, fracciones, pautas básicas, pausa y duración inclusiva.
-- Eventos persistidos, detalle, confirmar/omitir y apertura desde notificaciones Android/iOS.
-- Rediseño basado en las cuatro referencias de screenshots/, con previews.
-- Stock con inicialización explícita, movimientos, ajustes justificados, umbrales, previsiones
-  y descuento único en la misma transacción que confirma la toma.
-- Escáner para España: cámara nativa, CN manual, códigos EAN/NTIN compatibles y consulta
-  CIMA opcional con confirmación. No se infiere dosis ni stock del envase.
-- README principal en inglés, README.es.md, CHANGELOG.md, LICENSE y NOTICE presentes.
-- La versión instalada se consulta desde cada plataforma en Ajustes.
+- El usuario eligió convertir el acceso simulado en autenticación local funcional.
+- Después pidió terminar las pruebas **sin generar APK**. No ejecutar assemble/package sin una nueva petición.
+- No se ha solicitado publicación, despliegue, commit ni push.
 
-## Evidencia disponible
+## Estado integrado
 
-- 46 comprobaciones Kotlin/JUnit y 11 comprobaciones SQLite pasan.
-- El lector iOS y el cliente HTTP compilan en aislamiento con Kotlin/Native 2.4.0.
-- Recursos/traducciones, manifiestos, catálogo de versiones, enlaces de README y
-  git diff --check verificados.
-- El usuario confirmó una build anterior de autenticación, no la build actual completa.
+La fuente de autenticación usa Room local: registro e inicio de sesión comprueban contraseñas
+PBKDF2 y actualizan contraseñas antiguas en claro al primer acceso correcto. No hay correo ni
+sincronización en la nube.
+La sesión usa un identificador local estable y almacenamiento de plataforma; el repositorio
+no elimina medicación al cerrar sesión. Recordarme controla la restauración del acceso.
+La recuperación por código está registrada en Koin y expuesta desde Perfil y la pantalla de
+restablecimiento. Generar un código exige la contraseña actual; se muestra una sola vez y se
+consume al cambiar la contraseña.
 
-## Primeros pasos al retomar
+Integrados desde la copia de cierre, adaptados al código actual:
+- Cantidades exactas, pauta básica, duración inclusiva, pausa y datos opcionales.
+- Eventos persistidos, detalle, confirmar/omitir y apertura desde avisos nativos.
+- Stock con recuento explícito, movimientos, previsión y consumo transaccional único.
+- Escáner España, CN manual y consulta CIMA opcional con confirmación.
+- Diseño compartido, previews y versión instalada desde plataforma.
+- Migraciones explícitas 5→11, sin borrado destructivo; esquema v11 generado mediante KSP.
+- Esquemas v6/v7 recuperados del commit histórico c27c31b, sin fabricar hashes.
 
-1. Compilar el estado actual desde una terminal normal:
+## Validación terminada
 
-   ```sh
-   ./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest :composeApp:assembleDebug
-   ./gradlew :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
-   ```
-
-2. Resolver cualquier error real de Compose/KSP/dependencias nativas y generar/revisar
-   el esquema Room v11. El esquema v8 existente fue generado; no fabricar hashes/esquemas.
-3. Probar stock/tomas y navegación por notificaciones en dispositivos y validar la nueva
-   dependencia Google Code Scanner 16.1.0. Probar cámara iOS y consulta CIMA real:
-   no se ha confirmado una consulta de catálogo en vivo.
-4. Revisar el renderizado del nuevo diseño, texto ampliado, teclado, ambos temas e idiomas.
-5. Revisar los TODO de avisos transitivos, atribución heredada y privacidad antes de publicar.
-
-El entorno restringido del agente impide arrancar los bloqueos/sockets normales de Gradle.
-Las comprobaciones auxiliares no sustituyen la build completa:
+Comando ejecutado con éxito (sin tareas de APK):
 
 ```sh
-python3 scripts/run_domain_checks.py
+./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
 python3 scripts/verify_recovery_sql.py
-python3 scripts/run_native_adapter_checks.py
 ```
 
-## Documentación para continuar
+- JVM Android host: data 32 + domain 37, sin fallos (69).
+- Simulador iOS: data registra 38 + domain 36, sin fallos. Un caso de data retorna
+  anticipadamente cuando Keychain no está disponible: 73 comprobaciones ejercitadas,
+  Keychain pendiente en app firmada. No interpretar ese retorno como validación de Keychain.
+- SQLite auxiliar: 11 comprobaciones, sin fallos.
+- RecoveryMigrationTest usa src/sqliteTest compartida por iosTest/androidDeviceTest:
+  el runner JVM de Android no puede cargar la biblioteca JNI Android en macOS.
+- KSP Android/iOS genera el esquema Room v11. La compilación Android de presentation y
+  composeApp pasó en el intento previo; el empaquetado completo no se ha completado.
+- APK existente en outputs: fechado el 23 de octubre; no se ha generado uno nuevo.
 
-- docs/stock-validation.md
-- docs/scanner-spain.md
-- docs/reminder-validation.md
-- docs/design-system.md
+## Fase de validación adicional terminada
 
-Pendientes funcionales adicionales: horarios arbitrarios por días/horas, posposición,
-historial completo/exportación/archivado, diagnóstico de permisos y migraciones 1–4.
-Estas versiones antiguas fallan sin borrar sus datos; no recomendar desinstalar para migrar.
+- RoomMigrationTest abre archivos SQLite temporales con el builder de producción y el
+  validador KSP real: v5/v6/v7/v8→v11 pasan, conservando cuenta, medicación y cantidades
+  antiguas sin inventar stock. Las escrituras nuevas persisten al reabrir el archivo.
+- v4 rechaza la apertura sin borrar su cuenta, medicación ni versión.
+- Las fixtures se copian de los esquemas exportados v4–v8; comprobar su correspondencia:
+  `python3 scripts/generate_migration_fixtures.py --check`.
+- Seis regresiones nuevas de sincronización de avisos cubren sesión ausente/cambiada,
+  desactivación durante planificación y errores temporales.
+- Corregido SyncRemindersUseCase: vuelve a leer la preferencia tras planificar para no
+  programar avisos que el usuario acaba de desactivar, incluso cuando falla la planificación.
+- Detalles y límites: docs/migration-validation.md.
 
-## Guardado local
+## Pendientes
 
-El commit de cierre no pudo crearse: el entorno deniega escribir `.git/index.lock`.
-Los archivos permanecen guardados en el árbol de trabajo. Hay una copia adicional en
-`.checkpoints/session-checkpoint.tar.gz`, con cambios, archivos nuevos y referencia al commit base.
-La carpeta de copias está excluida de Git. No se ha hecho push.
+La lista completa y ordenada está en [TASKS.md](TASKS.md): documentación/contribución,
+autenticación, conservación de datos, dispositivos, accesibilidad, funciones,
+automatización, licencias y privacidad. No incluye publicación ni requisitos de tiendas.
+La firma de desarrollo iOS solo se contempla para ejecución y validación local.
+
+No ejecutar una build para generar APK mientras siga vigente la restricción del usuario.
+Los cambios siguen en el árbol de trabajo, sin commit ni push.

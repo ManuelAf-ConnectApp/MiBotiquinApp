@@ -36,7 +36,9 @@ class DoseRepositoryImpl(private val store: DoseLocalDataSource, private val ses
                 if (planned.size >= limit.coerceIn(1, 60)) break
                 events.insert(event)
                 val stored = events.get(event.id, owner) ?: continue
-                if (stored.status == DoseStatus.PENDING.name) planned += DoseReminder(event.id, event.medicationId, event.scheduledAt, event.reminderAt)
+                if (stored.status == DoseStatus.PENDING.name) planned += DoseReminder(
+                    event.id, event.medicationId, event.scheduledAt, stored.snoozedUntil ?: stored.reminderAt
+                )
             }
             requireOwner(owner)
             planned
@@ -74,12 +76,34 @@ class DoseRepositoryImpl(private val store: DoseLocalDataSource, private val ses
         }
     }
 
+    override suspend fun snoozeDose(eventId: String, minutes: Int): Result<DoseDetail?> = safely {
+        require(minutes in 1..120) { "Snooze duration must be between 1 and 120 minutes" }
+        val owner = owner()
+        store.transaction {
+            val current = detail(eventId, owner)
+            if (current != null && current.status == DoseStatus.PENDING) {
+                val until = Clock.System.now().toEpochMilliseconds() + minutes * 60_000L
+                events.snooze(eventId, owner, until)
+            }
+            detail(eventId, owner)
+        }
+    }
+
     override suspend fun pendingDoses(limit: Int): Result<List<DoseDetail>> = safely {
         val owner = owner()
         store.transaction {
             events.pending(owner, limit.coerceIn(1, 60)).mapNotNull { event ->
                 detail(event.id, owner)?.takeIf { it.status == DoseStatus.PENDING }
             }
+        }
+    }
+
+    override suspend fun doseHistory(limit: Int): Result<List<DoseDetail>> = safely {
+        val owner = owner()
+        store.transaction {
+            events.all(owner).asReversed().mapNotNull { event ->
+                detail(event.id, owner)?.takeIf { it.status != DoseStatus.PENDING }
+            }.sortedByDescending { it.resolvedAt ?: it.scheduledAt }.take(limit.coerceIn(1, 200))
         }
     }
 
@@ -103,7 +127,7 @@ class DoseRepositoryImpl(private val store: DoseLocalDataSource, private val ses
         requireOwner(owner)
         return amount?.let { DoseDetail(
             event.id, event.medicationId, med.name, it, event.scheduledAt,
-            occurrence?.reminderAt ?: event.reminderAt, if (available) status else DoseStatus.OBSOLETE,
+            event.snoozedUntil ?: occurrence?.reminderAt ?: event.reminderAt, if (available) status else DoseStatus.OBSOLETE,
             event.resolvedAt, if (isPending && available) med.notes else event.notes,
             if (isPending && available) med.pharmacologicalDose else event.pharmacologicalDose,
             account != null, account?.balanceMinor

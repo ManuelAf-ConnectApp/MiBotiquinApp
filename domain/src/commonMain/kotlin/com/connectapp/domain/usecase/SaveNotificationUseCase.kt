@@ -1,12 +1,6 @@
 package com.connectapp.domain.usecase
 
-import com.connectapp.domain.manager.NotificationManager
-import com.connectapp.domain.model.Medication
-
-class SaveNotificationUseCase(
-    private val notificationManager: NotificationManager
-) {
-    operator fun invoke(medication: Medication) {
-        notificationManager.scheduleNotification(medication)
-    }
+/** Legacy entry point; all reminders are rebuilt from persisted dose events. */
+class SaveNotificationUseCase(private val syncReminders: SyncRemindersUseCase) {
+    suspend operator fun invoke(medication: com.connectapp.domain.model.Medication) = syncReminders()
 }

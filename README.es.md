@@ -1,11 +1,14 @@
 # Mi Botiquín App
 
-<img src="commonResources/src/commonMain/composeResources/drawable/app_logo.png" width="96" alt="Logo de Mi Botiquín App">
+<img src="commonResources/src/commonMain/composeResources/drawable/mibotiquin_icon.png" width="96" alt="Logo de Mi Botiquín App">
 
 [English](README.md) · [Changelog](CHANGELOG.md) · [Licencia](LICENSE) · [Avisos](NOTICE)
 
+[Cómo contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [Tareas pendientes](docs/TASKS.md)
+
 Organizador personal de medicación Android/iOS con Kotlin Multiplatform y Compose. Las
-cuentas, tratamientos, tomas e inventario se guardan localmente. La identificación opcional
+cuentas, tratamientos, tomas e inventario se guardan localmente. El acceso valida la contraseña
+en este dispositivo y no envía correos ni sincroniza datos. La identificación opcional
 de medicamentos españoles consulta CIMA/AEMPS por acción expresa del usuario. La app registra
 la pauta del usuario; no diagnostica, prescribe ni recomienda fraccionar comprimidos.
 
@@ -13,8 +16,8 @@ la pauta del usuario; no diagnostica, prescribe ni recomienda fraccionar comprim
 
 | Área | Implementado en código |
 |---|---|
-| Cuentas locales | Registro/login, hashes PBKDF2 con sal, sesión protegida en plataforma, Recordarme, cierre y borrado de cuenta |
-| Recuperación | Código de un solo uso generado desde Perfil tras verificar contraseña; restablecimiento local con correo, código y nueva contraseña |
+| Acceso local | Registro/login con contraseña PBKDF2, sesión protegida en plataforma, Recordarme, cierre y borrado de cuenta |
+| Recuperación | Código local de un solo uso generado desde Perfil tras verificar contraseña; restablecimiento con correo, código y nueva contraseña |
 | Medicación | Cantidades exactas en cuartos de comprimido y mL, fechas, duración inclusiva, tratamiento indefinido/en pausa, dosis farmacológica y notas opcionales |
 | Tomas | Eventos pendientes, detalle, confirmar/omitir, hora de registro, aislamiento e idempotencia |
 | Notificaciones | Programación nativa Android/iOS y apertura de la toma concreta, continuando tras autenticación |
@@ -22,11 +25,11 @@ la pauta del usuario; no diagnostica, prescribe ni recomienda fraccionar comprim
 | Escáner España | Google Code Scanner en Android / AVFoundation en iOS, EAN/NTIN españoles compatibles, CN manual, consulta CIMA opcional y confirmación |
 | Interfaz | Diseño claro/oscuro basado en capturas y formularios compartidos accesibles |
 
-**La validación es parcial:** pasan 46 pruebas Kotlin/JUnit y 11 comprobaciones SQLite. El
-lector iOS y el cliente HTTP también compilan por separado con Kotlin/Native. El usuario
-confirmó una compilación anterior de autenticación. La compilación completa actual
-Gradle/Compose/KSP, la nueva dependencia Android, las cámaras/CIMA reales y la matriz nativa
-siguen pendientes. Implementado en código no equivale a probado en dispositivo.
+**Validación actual:** pasan 69 pruebas JVM, 77 comprobaciones iOS ejercitadas y 11 comprobaciones SQLite.
+La suite iOS registra un caso adicional de Keychain que retorna sin comprobar el almacén al
+no estar disponible en el binario de pruebas; requiere validación en una app firmada.
+KSP ha generado Room v11; las migraciones v1--v8→v11 pasan con el validador real de Room en iOS. Las cámaras/CIMA reales, notificaciones y accesibilidad en dispositivo
+siguen pendientes. No se ha generado un APK nuevo; el usuario ha limitado la ejecución a pruebas.
 
 ## Plataformas, tecnología y estructura
 
@@ -60,22 +63,36 @@ Pruebas de simulador:
 ./gradlew :data:iosSimulatorArm64Test :domain:iosSimulatorArm64Test
 ```
 
-La compilación completa debe generar y revisar el esquema actual Room **v11**. Solo deben
+El esquema actual Room **v11** se ha generado mediante KSP para Android e iOS. Solo deben
 incorporarse esquemas producidos por KSP; no se inventan hashes de identidad.
+
+## Requisitos y contribución
+
+El wrapper incluido usa Gradle 9.6.0, Kotlin 2.4.0 y Android Gradle Plugin 9.4.1. Para Android
+necesitas JDK 17 o posterior, Android Studio y Android SDK Platform 37; la aplicación requiere
+API 26 o posterior para ejecutarse. Para iOS necesitas macOS y Xcode. Un dispositivo con firma
+de desarrollo basta para probar avisos o Keychain: el proyecto no se publica en tiendas.
+
+La primera descarga de dependencias requiere internet. El escáner Android puede descargar su
+módulo de Google Play services al utilizarse por primera vez. No instales Gradle globalmente ni
+subas `local.properties`, secretos, bases de datos o datos sanitarios.
+
+La contribución, las pruebas y las reglas de datos están en [CONTRIBUTING.md](CONTRIBUTING.md).
+La aplicación usa acceso local: valida la contraseña en este dispositivo y no envía correos
+ni sincroniza datos. Para vulnerabilidades consulta [SECURITY.md](SECURITY.md), sin publicar
+datos sensibles en incidencias. La lista priorizada de trabajo está en [docs/TASKS.md](docs/TASKS.md).
 
 ## Datos locales, recuperación y privacidad
 
-No hay cuenta en la nube ni sincronización de tratamientos. Cada cuenta aísla sus operaciones
-de medicación, tomas y stock. Contraseñas nuevas y códigos usan hashes PBKDF2 con sal; las
-contraseñas antiguas en claro se actualizan tras un login correcto. La sesión usa almacenamiento
-respaldado por Android Keystore o iOS Keychain. No se afirma que toda la base sanitaria esté
-cifrada. La configuración Android existente desactiva las copias de seguridad.
-
-Tras registrarte, abre **Perfil → Código de recuperación**, verifica tu contraseña y guarda
-el código fuera del dispositivo en un lugar privado. Generar otro sustituye el anterior. Un
-restablecimiento correcto lo consume y cierra sesión sin borrar medicación. El correo es un
-identificador local; no verifica la titularidad del buzón. Sin contraseña ni código previamente
-generado no se puede recuperar el acceso. Desinstalar o borrar datos puede perder la información.
+El acceso es local. Las contraseñas nuevas y los códigos de recuperación usan hashes PBKDF2
+con sal. No hay recuperación por correo ni sincronización en la nube. Los repositorios de
+medicación, tomas y stock comprueban el identificador de sesión.
+El identificador local se conserva entre sesiones para mantener los datos de cada cuenta.
+La sesión usa Android Keystore o iOS Keychain; no se afirma que toda la base sanitaria esté cifrada.
+Desde Perfil puedes generar un código de recuperación tras verificar la contraseña actual.
+Guárdalo fuera del dispositivo: sustituye al código anterior, solo se muestra una vez y se
+consume al restablecer el acceso. Sin contraseña ni código generado previamente no se puede
+recuperar una cuenta local.
 
 Desde Perfil puedes borrar explícitamente cuenta y datos asociados. Borrar una medicación
 elimina también su historial de tomas/stock, con confirmación. No incluyas información sanitaria
@@ -155,16 +172,15 @@ python3 scripts/verify_recovery_sql.py
 ```
 
 Las comprobaciones con compilador en caché/SQLite no sustituyen Gradle, KSP, Compose ni pruebas
-en dispositivo. El entorno restringido del agente no puede iniciar los bloqueos/sockets normales
-de Gradle; ejecuta la build desde una terminal normal. Las nuevas dependencias Google pueden
-necesitar red. Las bases 1–4 fallan al abrir **sin borrar datos**; no desinstales como solución.
-Se incluyen migraciones 5→11 comprobadas con SQLite; quedan validación Room y exportación actual.
+en dispositivo. Gradle requiere acceso autorizado a su caché global fuera del entorno restringido. Las nuevas dependencias Google pueden
+necesitar red. Las bases v1--v4 se migran sin borrar datos; no desinstales como solución.
+Se incluyen migraciones v1→v11 comprobadas con SQLite y el esquema v11 exportado por KSP.
 
 ## Pendientes y contribución
 
 Pendientes: aceptación/build nativa e inventario de licencias; horarios arbitrarios por días;
-posposición, historial completo/exportación, archivado, diagnóstico de notificaciones, migraciones
-1–4, OCR/GTIN general y política de privacidad revisada para publicación. No se presupone nube.
+historial completo/exportación, archivado, diagnóstico de notificaciones,
+OCR/GTIN general y política de privacidad revisada para publicación. No se presupone nube.
 Mantén cambios incrementales, conserva datos, añade pruebas de dominio/persistencia relevantes
 y actualiza ambos README y [CHANGELOG.md](CHANGELOG.md).
 

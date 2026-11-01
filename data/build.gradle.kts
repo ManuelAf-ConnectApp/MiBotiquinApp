@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.androidLint)
     alias(libs.plugins.androidxRoom)
     alias(libs.plugins.ksp)
+    kotlin("plugin.serialization") version libs.versions.kotlin.get()
 
 }
 
@@ -70,6 +71,9 @@ kotlin {
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.cryptography.core)
+                implementation(libs.cryptography.provider.optimal)
+                implementation(libs.cryptography.random)
                 api(libs.androidx.room.runtime)
                 api(libs.androidx.sqlite.bundled)
 
@@ -89,13 +93,21 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.core)
+                implementation(libs.koin.core)
                 // Add Android-specific dependencies here. Note that this source set depends on
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.
             }
         }
 
+        // Bundled SQLite uses platform native libraries. Run its migration checks on
+        // Android devices and iOS, rather than the Android JVM host test runner.
+        iosTest {
+            kotlin.srcDir("src/sqliteTest/kotlin")
+        }
+
         getByName("androidDeviceTest") {
+            kotlin.srcDir("src/sqliteTest/kotlin")
             dependencies {
                 implementation(libs.androidx.runner)
                 implementation(libs.androidx.core)

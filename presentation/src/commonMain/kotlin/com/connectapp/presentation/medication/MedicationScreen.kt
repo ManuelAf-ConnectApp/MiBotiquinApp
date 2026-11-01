@@ -1,6 +1,7 @@
 package com.connectapp.presentation.medication
 
 import androidx.compose.foundation.layout.*
+import com.connectapp.presentation.component.PrimaryActionButton
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.connectapp.commonresources.*
+import com.connectapp.commonresources.resources.Res
+import com.connectapp.commonresources.resources.custom_schedule_hint
+import com.connectapp.commonresources.resources.custom_schedule_label
+import com.connectapp.domain.model.CatalogPresentation
+import com.connectapp.domain.model.DoseUnit
 import com.connectapp.domain.model.Medication
 import com.connectapp.domain.model.User
 import com.connectapp.presentation.medication.component.DateInput
@@ -32,6 +38,7 @@ fun MedicationScreen(
     modifier: Modifier,
     user: User,
     medication: Medication? = null,
+    prefill: CatalogPresentation? = null,
     onNavigateBack: () -> Unit,
     onShowMessage: (String) -> Unit = {}
 ) {
@@ -43,11 +50,12 @@ fun MedicationScreen(
         onIntent(MedicationIntent.OnInitUserData(user))
     }
 
-    LaunchedEffect(medication) {
+    LaunchedEffect(medication, prefill) {
         if (medication != null) {
             onIntent(MedicationIntent.LoadMedication(medication))
         } else {
             onIntent(MedicationIntent.ClearMedication)
+            if (prefill != null) onIntent(MedicationIntent.Prefill(prefill))
         }
     }
 
@@ -63,7 +71,6 @@ fun MedicationScreen(
     MedicationScreenContent(
         modifier = modifier,
         state = state,
-        isEditing = medication != null,
         onIntent = onIntent
     )
 }
@@ -73,28 +80,22 @@ fun MedicationScreen(
 private fun MedicationScreenContent(
     modifier: Modifier,
     state: MedicationState,
-    isEditing: Boolean,
     onIntent: (MedicationIntent) -> Unit,
 ) {
     val todayStart = remember {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val today = now.date
-        today.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        // El DatePicker trabaja con la medianoche UTC de cada día: se compara "hoy" (local)
+        // en esa misma escala, o al oeste de UTC el día de hoy no sería seleccionable.
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        today.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
     }
 
-    val startDateSelectable = remember {
-        object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= todayStart
-            }
-        }
-    }
+    val startDateSelectable = remember { object : SelectableDates {} }
 
-    val endDateSelectable = remember(state.startDate) {
+    val endDateSelectable = remember(state.startDate, todayStart) {
         object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                 val minDate = state.startDate ?: todayStart
-                return utcTimeMillis > minDate
+                return utcTimeMillis >= minDate
             }
         }
     }
@@ -104,15 +105,11 @@ private fun MedicationScreenContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimen16, vertical = Dimen20),
             verticalArrangement = Arrangement.spacedBy(Dimen20)
         ) {
-            Text(
-                text = if (isEditing) stringResource(title_edit_medication) else stringResource(title_new_medication),
-                style = MaterialTheme.typography.headlineSmall
-            )
-
             FormSection(title = stringResource(section_medication)) {
                 OutlinedTextField(
                     value = state.name,
@@ -122,6 +119,14 @@ private fun MedicationScreenContent(
                     singleLine = true
                 )
 
+                state.catalogueCode?.takeIf { state.name == state.catalogueName }?.let { code ->
+                    Text(stringResource(scan_cn_value, code), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(scan_source_attribution), style = MaterialTheme.typography.bodySmall)
+                    state.catalogueRetrievedAt?.let { timestamp ->
+                        Text(stringResource(scan_retrieved_at, com.connectapp.presentation.dose.doseTimeLabel(timestamp)), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(stringResource(scan_prefill_limits), style = MaterialTheme.typography.bodySmall)
+                }
                 DosesPerDayDropdown(
                     selectedDoses = state.dosesPerDay,
                     onDosesChanged = { onIntent(MedicationIntent.DosesPerDayChanged(it)) },
@@ -135,9 +140,39 @@ private fun MedicationScreenContent(
                     onUnitChanged = { onIntent(MedicationIntent.QuantityUnitChanged(it)) },
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (DoseUnit.fromStored(state.quantityUnit) == DoseUnit.TABLET) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Dimen8)) {
+                        listOf("¼" to "0.25", "½" to "0.5", "¾" to "0.75", "1" to "1").forEach { (label, value) ->
+                            FilterChip(
+                                selected = state.parsedQuantity?.toDecimalString() == value,
+                                onClick = { onIntent(MedicationIntent.QuantityChanged(value)) },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                    Text(stringResource(tablet_split_warning), style = MaterialTheme.typography.bodySmall)
+                }
+                OutlinedTextField(
+                    value = state.pharmacologicalDose,
+                    onValueChange = { onIntent(MedicationIntent.PharmacologicalDoseChanged(it)) },
+                    label = { Text(stringResource(label_pharmacological_dose)) },
+                    supportingText = { Text(stringResource(pharmacological_dose_help)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = state.notes,
+                    onValueChange = { onIntent(MedicationIntent.NotesChanged(it)) },
+                    label = { Text(stringResource(label_treatment_notes)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             FormSection(title = stringResource(section_schedule)) {
+                Text(stringResource(schedule_evenly_spaced_help), style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(treatment_indefinite), modifier = Modifier.weight(1f))
+                    Switch(checked = state.isIndefinite, onCheckedChange = { onIntent(MedicationIntent.IndefiniteChanged(it)) })
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Dimen8)
@@ -150,7 +185,7 @@ private fun MedicationScreenContent(
                         modifier = Modifier.weight(1f)
                     )
 
-                    DateInput(
+                    if (!state.isIndefinite) DateInput(
                         label = label_end_date,
                         selectedDate = state.endDate,
                         onDateSelected = { onIntent(MedicationIntent.EndDateChanged(it)) },
@@ -166,13 +201,37 @@ private fun MedicationScreenContent(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                OutlinedTextField(
+                    value = state.customSchedule,
+                    onValueChange = { onIntent(MedicationIntent.CustomScheduleChanged(it)) },
+                    label = { Text(stringResource(Res.string.custom_schedule_label)) },
+                    supportingText = { Text(stringResource(Res.string.custom_schedule_hint)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = state.weekdaySchedule,
+                    onValueChange = { onIntent(MedicationIntent.WeekdayScheduleChanged(it)) },
+                    label = { Text(stringResource(weekday_schedule_label)) },
+                    supportingText = { Text(stringResource(weekday_schedule_hint)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
                 ReminderTimeDropdown(
                     selectedMinutes = state.reminderMinutes,
                     onMinutesChanged = { onIntent(MedicationIntent.ReminderMinutesChanged(it)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                DurationSummary(days = state.durationDays)
+                if (state.isIndefinite) Text(stringResource(treatment_indefinite))
+                else DurationSummary(days = state.durationDays)
+                Text(stringResource(treatment_dates_help), style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(treatment_paused), modifier = Modifier.weight(1f))
+                    Switch(checked = state.isPaused, onCheckedChange = { onIntent(MedicationIntent.PausedChanged(it)) })
+                }
+                Text(stringResource(treatment_pause_help), style = MaterialTheme.typography.bodySmall)
             }
         }
 
@@ -193,7 +252,7 @@ private fun FormSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
         shape = MaterialTheme.shapes.large
     ) {
@@ -263,22 +322,7 @@ private fun MedicationFooter(
                 )
             }
 
-            Button(
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isSaveEnabled && !isSaving,
-                shape = MaterialTheme.shapes.medium
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(Dimen20),
-                        strokeWidth = Dimen2,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(stringResource(button_save))
-                }
-            }
+            PrimaryActionButton(stringResource(button_save), onSaveClick, enabled = isSaveEnabled, busy = isSaving)
         }
     }
 }

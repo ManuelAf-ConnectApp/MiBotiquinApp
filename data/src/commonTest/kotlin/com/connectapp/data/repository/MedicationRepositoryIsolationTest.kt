@@ -36,6 +36,11 @@ class MedicationRepositoryIsolationTest {
             return medication.id
         }
         override suspend fun deleteMedication(id: Long) { writes++; rows.remove(id) }
+        override suspend fun archiveMedication(id: Long, owner: String): Boolean {
+            val current = rows[id]?.takeIf { it.codUser == owner && !it.isArchived } ?: return false
+            writes++; rows[id] = current.copy(isArchived = true, isPaused = true)
+            return true
+        }
     }
 
     @Test fun anotherAccountsMedicationCannotBeReadEditedOrDeleted() = runBlocking<Unit> {
@@ -67,6 +72,14 @@ class MedicationRepositoryIsolationTest {
         assertIs<AppError.Unauthorized>(repository.saveMedication(medication(1, "1").toDomain()).exceptionOrNull())
         assertIs<AppError.Unauthorized>(repository.deleteMedication(1).exceptionOrNull())
         assertEquals(2, store.writes)
+    }
+
+    @Test fun archivingOnlyAffectsTheActiveOwnersTreatment() = runBlocking<Unit> {
+        val store = Store(); val repository = MedicationRepositoryImpl(store, Session())
+        assertTrue(repository.archiveMedication(1).isSuccess)
+        assertTrue(store.rows.getValue(1).isArchived)
+        assertTrue(store.rows.getValue(1).isPaused)
+        assertIs<AppError.Unauthorized>(repository.archiveMedication(2).exceptionOrNull())
     }
 
     companion object {

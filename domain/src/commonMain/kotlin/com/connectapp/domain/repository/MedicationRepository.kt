@@ -9,4 +9,5 @@ interface MedicationRepository {
     suspend fun getUserMedicationsByCodUser(codUser: String): Result<List<Medication>>
     suspend fun getAllMedications(): Result<List<Medication>>
     suspend fun deleteMedication(id: Long): Result<Unit>
+    suspend fun archiveMedication(id: Long): Result<Unit>
 }

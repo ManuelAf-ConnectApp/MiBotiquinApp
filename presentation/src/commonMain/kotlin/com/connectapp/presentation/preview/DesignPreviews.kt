@@ -37,7 +37,7 @@ fun LoginDesignPreview() = PreviewTheme { LoginScreenContent(state = LoginState(
 @Composable
 fun RegisterDesignPreview() = PreviewTheme { RegisterScreenContent(state = RegisterState(), onIntent = {}) }
 
-@Preview(name = "Local recovery", widthDp = 390, heightDp = 844, locale = "es")
+@Preview(name = "Password recovery (simulated)", widthDp = 390, heightDp = 844, locale = "es")
 @Composable
 fun RecoveryDesignPreview() = PreviewTheme { ForgotPasswordScreenContent(state = ForgotPasswordState(), onIntent = {}) }
 

@@ -1,12 +1,10 @@
 package com.connectapp.data.manager
 
 import com.connectapp.domain.manager.NotificationManager
-import com.connectapp.domain.model.Medication
-import kotlin.time.Instant
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
+import com.connectapp.domain.model.DoseReminder
+import com.connectapp.domain.notification.ReminderNavigation
+import com.connectapp.domain.model.NotificationDiagnostics
+import platform.UserNotifications.UNNotificationDismissActionIdentifier
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -25,7 +23,13 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
 
-class IOSNotificationManager : NotificationManager {
+class IOSNotificationManager(private val navigation: ReminderNavigation) : NotificationManager {
+    private var scheduledCount = 0
+
+    private companion object {
+        // Margen bajo el límite de 64 de iOS para no desplazar otras notificaciones locales.
+        const val MAX_PENDING_REMINDERS = 60
+    }
 
     // Held as a strong reference: `UNUserNotificationCenter.delegate` is a weak property,
     // so without this the delegate would be deallocated right after being assigned.
@@ -49,6 +53,10 @@ class IOSNotificationManager : NotificationManager {
             didReceiveNotificationResponse: UNNotificationResponse,
             withCompletionHandler: () -> Unit
         ) {
+            if (didReceiveNotificationResponse.actionIdentifier != UNNotificationDismissActionIdentifier) {
+                val eventId = didReceiveNotificationResponse.notification.request.content.userInfo["dose_event_id"] as? String
+                if (eventId != null) navigation.open(eventId)
+            }
             withCompletionHandler()
         }
     }
@@ -90,102 +98,25 @@ class IOSNotificationManager : NotificationManager {
         }
     }
 
-    override fun scheduleNotification(medication: Medication) {
-        val notificationCenter = UNUserNotificationCenter.currentNotificationCenter()
-
-        val intervalMillis = medication.intervalHours * 3600_000L
-        if (intervalMillis <= 0) return // guards against a degenerate/zero interval looping forever
-
-        val timeZone = TimeZone.currentSystemDefault()
+    override fun scheduleReminders(reminders: List<DoseReminder>) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
         val nowMillis = (NSDate().timeIntervalSince1970() * 1000).toLong()
-
-        // Same precise calculation as Android: the calendar day of "startDate" combined with
-        // the explicitly chosen hour/minute, minus the reminder lead time. Using the raw
-        // startDate millis directly (as before) ignored startTimeHour/startTimeMinute and
-        // reminderMinutes entirely, so reminders fired at the wrong time (midnight UTC of the
-        // start day) instead of the time the user actually picked.
-        val baseDateMillis = medication.startDate ?: nowMillis
-        val localDate = Instant.fromEpochMilliseconds(baseDateMillis).toLocalDateTime(timeZone)
-        val preciseDateTime = LocalDateTime(
-            year = localDate.year,
-            month = localDate.month,
-            day = localDate.day,
-            hour = medication.startTimeHour,
-            minute = medication.startTimeMinute,
-            second = 0,
-            nanosecond = 0
-        )
-        var doseTimeMillis = preciseDateTime.toInstant(timeZone).toEpochMilliseconds() -
-            (medication.reminderMinutes * 60_000L)
-
-        // The UI never forces the user to pick an "endDate" (isSaveButtonEnabled doesn't
-        // require it), so it's routinely null. Treating a missing endDate as "no window" made
-        // the loop below never execute, meaning NO notification was ever scheduled. Fall back
-        // to the duration (in days) the user did enter, like Android's receiver does.
-        val endMillis = medication.endDate
-            ?: (baseDateMillis + (medication.durationDays.takeIf { it > 0 } ?: 1) * 86_400_000L)
-
-        // If the first dose already elapsed, fast-forward to the next upcoming occurrence.
-        if (doseTimeMillis < nowMillis) {
-            val missedDoses = (nowMillis - doseTimeMillis) / intervalMillis + 1
-            doseTimeMillis += missedDoses * intervalMillis
-        }
-
-        var doseNumber = 1
-        // Limit to 20 doses per medication to avoid hitting the global iOS 64-notification limit
-        val maxDosesPerMedication = 20
-
-        val (notifTitle, notifBody) = getNotificationTitleAndBody(medication.name)
-
-        // Pre-schedule doses within the treatment window
-        while (doseTimeMillis <= endMillis && doseNumber <= maxDosesPerMedication) {
-            val secondsFromNow = (doseTimeMillis - nowMillis) / 1000.0
-
-            if (secondsFromNow > 0) {
-                val content = UNMutableNotificationContent().apply {
-                    setTitle(notifTitle)
-                    setBody(notifBody)
-                    setSound(UNNotificationSound.defaultSound())
-                }
-
-                // Create a non-repeating trigger for this specific time gap from now
-                val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
-                    secondsFromNow,
-                    repeats = false
-                )
-
-                // Create a composite unique identifier: e.g., "123_dose_1", "123_dose_2"
-                val uniqueId = "${medication.id}_dose_$doseNumber"
-                val request = UNNotificationRequest.requestWithIdentifier(uniqueId, content, trigger)
-
-                notificationCenter.addNotificationRequest(request) { error ->
-                    if (error != null) {
-                        println("Error scheduling reminder in iOS: ${error.localizedDescription}")
-                    }
-                }
+        center.removeAllPendingNotificationRequests()
+        val pending = reminders.filter { it.reminderAt > nowMillis }.take(MAX_PENDING_REMINDERS)
+        scheduledCount = pending.size
+        pending.forEach { reminder ->
+            val spanish = ((platform.Foundation.NSBundle.mainBundle.preferredLocalizations.firstOrNull() as? String) ?: "es").startsWith("es")
+            val content = UNMutableNotificationContent().apply {
+                setTitle(if (spanish) "Recordatorio de medicación" else "Medication reminder")
+                setBody(if (spanish) "Abre la app para revisar tu toma pendiente." else "Open the app to review your pending dose.")
+                setSound(UNNotificationSound.defaultSound())
+                setUserInfo(mapOf<Any?, Any?>("dose_event_id" to reminder.eventId))
             }
-
-            doseTimeMillis += intervalMillis
-            doseNumber++
+            val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
+                ((reminder.reminderAt - nowMillis) / 1000.0).coerceAtLeast(1.0), false)
+            center.addNotificationRequest(UNNotificationRequest.requestWithIdentifier(reminder.eventId, content, trigger)) { _ -> }
         }
     }
 
-    override fun cancelNotification(medication: Medication) {
-        val notificationCenter = UNUserNotificationCenter.currentNotificationCenter()
-        
-        // Cancel all dose notifications for this medication
-        // We need to know how many were scheduled or just use a range
-        val identifiers = (1..64).map { "${medication.id}_dose_$it" }
-        notificationCenter.removePendingNotificationRequestsWithIdentifiers(identifiers)
-    }
-
-    private fun getNotificationTitleAndBody(medicationName: String): Pair<String, String> {
-        val preferred = platform.Foundation.NSBundle.mainBundle.preferredLocalizations
-        val primaryLanguage = (preferred.firstOrNull() as? String)?.lowercase() ?: "es"
-        val isSpanish = primaryLanguage.startsWith("es")
-
-        val title = if (isSpanish) "Hora de tu medicación" else "Time for your medication"
-        val body = if (isSpanish) "No olvides tomar tu dosis de: $medicationName" else "Don't forget to take your dose of: $medicationName"
-        return Pair(title, body)
-    }
+    override fun diagnostics() = NotificationDiagnostics(true, null, scheduledCount, "iOS")
 }

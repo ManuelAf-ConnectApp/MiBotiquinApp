@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.connectapp.commonresources.*
 import com.connectapp.domain.catalogue.SpanishMedicationCode
+import com.connectapp.domain.catalogue.Gtin
 import com.connectapp.domain.model.CatalogPresentation
 import com.connectapp.domain.repository.CatalogueRepository
 import com.connectapp.presentation.util.UiText
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 data class ScanState(
     val code: String = "", val result: CatalogPresentation? = null,
     val confirmed: Boolean = false, val loading: Boolean = false, val cameraActive: Boolean = false,
-    val message: UiText? = null
+    val message: UiText? = null, val recognizedGtin: String? = null
 )
 class ScanViewModel(private val catalogue: CatalogueRepository) : ViewModel() {
     private val mutableState = MutableStateFlow(ScanState())
@@ -31,7 +32,11 @@ class ScanViewModel(private val catalogue: CatalogueRepository) : ViewModel() {
         mutableState.value = when (result) {
             is CodeScanResult.Read -> {
                 val code = SpanishMedicationCode.nationalCode(result.value)
-                if (code == null) ScanState(message = UiText.StringRes(scan_unknown_code)) else ScanState(code = code)
+                when {
+                    code != null -> ScanState(code = code)
+                    Gtin.normalize(result.value) != null -> ScanState(recognizedGtin = Gtin.normalize(result.value), message = UiText.StringRes(scan_gtin_recognized))
+                    else -> ScanState(message = UiText.StringRes(scan_unknown_code))
+                }
             }
             CodeScanResult.Cancelled -> state.value.copy(cameraActive = false)
             CodeScanResult.PermissionDenied -> state.value.copy(cameraActive = false, message = UiText.StringRes(scan_camera_denied))
