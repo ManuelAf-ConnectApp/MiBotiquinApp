@@ -184,7 +184,8 @@ OCR/GTIN general y política de privacidad revisada para publicación. No se pre
 Mantén cambios incrementales, conserva datos, añade pruebas de dominio/persistencia relevantes
 y actualiza ambos README y [CHANGELOG.md](CHANGELOG.md).
 
-El código usa [Apache License 2.0](LICENSE). Conserva [NOTICE](NOTICE) y [NOTICE.md](NOTICE.md)
-heredado. SDK Google, frameworks de plataforma e información AEMPS tienen condiciones propias.
-La autoría/atribución del logo y el inventario completo de avisos transitivos requieren confirmación
-antes de publicar; véanse los TODO explícitos de NOTICE.
+El código y recursos propios usan [Apache License 2.0](LICENSE). Conserva [NOTICE](NOTICE) y
+[NOTICE.md](NOTICE.md). El titular, logo e iconos se identifican en NOTICE; los recursos propios
+se generaron con IA bajo su dirección. SDK Google, frameworks de plataforma e información AEMPS
+tienen condiciones propias. Antes de publicar binarios, completa el inventario de avisos
+transitivos del grafo de dependencias resuelto.

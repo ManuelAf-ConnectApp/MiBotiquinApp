@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify Apache license distribution files
+        run: sh scripts/verify_licensing.sh
       - name: Validate resources, Room exports and migration fixtures
         run: |
           python3 scripts/verify_resources.py
@@ -27,5 +29,7 @@ jobs:
           python3 scripts/verify_recovery_sql.py
       - name: Run shared Android-host tests (no APK is assembled)
         run: ./gradlew :data:testAndroidHostTest :domain:testAndroidHostTest --warning-mode all
+      - name: Generate Android release OSS notices
+        run: ./gradlew :composeApp:processReleaseManifest --warning-mode all
       - name: Inspect dependency graphs
-        run: ./gradlew :data:dependencies :presentation:dependencies --warning-mode all
+        run: ./gradlew :composeApp:dependencies --configuration releaseRuntimeClasspath --warning-mode all

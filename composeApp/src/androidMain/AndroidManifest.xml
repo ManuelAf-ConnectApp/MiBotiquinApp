@@ -18,6 +18,9 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
         <activity
+            android:name="com.google.android.gms.oss.licenses.v2.OssLicensesMenuActivity"
+            android:exported="false" />
+        <activity
             android:exported="true"
             android:name=".MainActivity"
             android:launchMode="singleTop">

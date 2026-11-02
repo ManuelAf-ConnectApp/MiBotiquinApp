@@ -1,5 +1,6 @@
 [versions]
 googleCodeScanner = "16.1.0"
+googleOssLicenses = "17.5.2"
 agp = "9.4.1"
 android-compileSdk = "37"
 android-minorApiLevel = "1"
@@ -35,6 +36,7 @@ coreVersion = "1.19.0"
 
 [libraries]
 google-code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version.ref = "googleCodeScanner" }
+google-oss-licenses = { module = "com.google.android.gms:play-services-oss-licenses", version.ref = "googleOssLicenses" }
 androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }

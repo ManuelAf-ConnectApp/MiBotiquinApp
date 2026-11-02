@@ -4,6 +4,17 @@ Changes are recorded using the Keep a Changelog categories. No released versions
 
 ## [Unreleased]
 
+### Licensing audit — 2026-11-02
+- Restore the Apache License 2.0 text at the repository root so source archives include it.
+- Correct the third-party notice inventory for directly declared Cryptography Kotlin and Google
+  Play services Code Scanner dependencies, while keeping the resolved-transitive audit explicit
+  as a release requirement.
+- Record the confirmed copyright holder and the AI-generated provenance of project-authored
+  source code, the logo and derived icons; retain the separate release requirement for
+  third-party transitive notices.
+- Package the resolved Android POM license notices through Google Play services OSS Licenses;
+  iOS/native release artifacts still require their own final notice review.
+
 ### Dose history and treatment archive — 2026-10-27
 - Add an account-scoped dose-history screen for confirmed, skipped and obsolete events.
 - Replace treatment deletion from Home with non-destructive archiving: archived treatments stop
