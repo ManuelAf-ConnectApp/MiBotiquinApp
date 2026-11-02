@@ -10,6 +10,11 @@ relicenciado por este repositorio). AEMPS/CIMA aporta información de catálogo 
 condiciones; no se redistribuye un catálogo ni se implica respaldo de AEMPS.
 
 Antes de distribuir binarios, ejecuta la inspección de dependencias de Gradle incluida en CI y
-conserva los avisos de artefactos transitivos que exijan atribución. El logo `MiBotiquinApp.png` y
-los iconos derivados se atribuyen al titular indicado en NOTICE; si cambia su procedencia debe
-actualizarse ese aviso antes de redistribuirlos.
+conserva los avisos de artefactos transitivos que exijan atribución. El logo `MiBotiquinApp.png`
+y los iconos derivados son recursos propios generados con IA bajo la dirección del titular que
+figura en NOTICE; no pertenecen a las dependencias de terceros.
+
+En Android, el plugin `com.google.android.gms.oss-licenses-plugin` recoge los términos declarados
+en los POM del classpath y los empaqueta junto con `play-services-oss-licenses`; la actividad de
+avisos queda declarada en el manifiesto. Antes de publicar iOS, conserva por separado los avisos
+del framework Kotlin/Native y de cualquier artefacto nativo incluido en el paquete.

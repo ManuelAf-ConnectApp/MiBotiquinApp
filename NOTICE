@@ -3,18 +3,18 @@ Mi Botiquín App
 Project source is distributed under Apache License, Version 2.0; see LICENSE.
 This notice does not relicense third-party SDKs, platform software or catalogue data.
 
-Inherited attribution (retained from NOTICE.md):
-Copyright 2026 Sngular
+Copyright 2026 Manuel María Alconchel Fernández
 
-TODO: Confirm the inherited copyright holder and logo/asset provenance before release.
-No new attribution or ownership is assigned by the implementation changes. Preserve the
-inherited NOTICE.md as well; its dependency list is not a complete resolved-binary audit.
+The project-authored source code and visual assets, including the Mi Botiquín App logo and
+derived icons, were generated with AI under the direction of the copyright holder above. They
+are distributed under the Apache License, Version 2.0. This statement does not apply to
+third-party dependencies, platform software or external catalogue information.
 
 Third-party components
 ----------------------
-The existing Kotlin, kotlinx, Compose/AndroidX and Koin components retain their own
-licenses/notices. See the inherited list in NOTICE.md and upstream project licenses.
-SQLite bundled distributions and transitive native libraries may carry additional notices.
+The declared Kotlin, kotlinx, Compose/AndroidX, Koin and Cryptography Kotlin components retain
+their own licenses/notices. See NOTICE.md and upstream project licenses. SQLite bundled
+distributions and transitive native libraries may carry additional notices.
 
 Android code reading uses Google Play services Code Scanner 16.1.0. This SDK is not
 represented as Apache-licensed project source. Its applicable Google terms and privacy
@@ -24,8 +24,10 @@ Camera processing is local; the SDK may communicate technical usage/performance 
 Manual medication/CN entry does not instantiate that scanner.
 
 TODO: Resolve the complete release dependency graph and preserve required upstream
-NOTICE/license files, including Google SDK and native transitive artifacts, before publishing.
-This file records known dependencies and does not certify a complete license audit.
+NOTICE/license files, including native transitive artifacts and the iOS framework, before
+publishing. Android builds apply the Google OSS Licenses plugin and package its resolved-POM
+notice data; its activity is declared in the Android manifest for display by the app.
+This file records known dependencies and does not certify a complete cross-platform license audit.
 
 CIMA/AEMPS information
 ----------------------

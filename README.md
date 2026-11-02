@@ -125,6 +125,12 @@ generar un código de recuperación de un solo uso desde Perfil. No se envían c
 sincronización en la nube. Consulta [docs/TASKS.md](docs/TASKS.md) para las funciones pendientes
 y [SECURITY.md](SECURITY.md) para informar vulnerabilidades.
 
+El código y recursos propios usan [Apache License 2.0](LICENSE). Conserva [NOTICE](NOTICE) y
+[NOTICE.md](NOTICE.md). El titular, logo e iconos se identifican en NOTICE; los recursos propios
+se generaron con IA bajo su dirección. SDK Google, frameworks de plataforma e información AEMPS
+tienen condiciones propias. Antes de publicar binarios, completa el inventario de avisos
+transitivos del grafo de dependencias resuelto.
+
 ---
 
 *Desarrollado con ❤️ para una mejor gestión de la salud.*
