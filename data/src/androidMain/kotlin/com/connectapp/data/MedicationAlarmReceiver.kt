@@ -13,6 +13,7 @@ import android.content.Intent
 import android.net.Uri
 import android.media.AudioAttributes
 import android.provider.Settings
+import android.app.Notification
 import androidx.core.app.NotificationCompat
 import com.connectapp.data.manager.MedicationReminderAlarms
 import com.connectapp.domain.manager.PreferenceKeys
@@ -51,11 +52,15 @@ class MedicationAlarmReceiver : BroadcastReceiver(), KoinComponent {
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val spanish = context.resources.configuration.locales[0].language.startsWith("es")
-        val channelId = "medication_reminders_v2"
+        // Android does not allow changing a channel's sound/importance after it has been created.
+        // A new id ensures installations that already had the reminder channel receive alarm
+        // behaviour as well.
+        val channelId = "medication_alarms_v3"
         manager.createNotificationChannel(NotificationChannel(channelId,
-            if (spanish) "Recordatorios de medicación" else "Medication reminders", NotificationManager.IMPORTANCE_HIGH).apply {
+            if (spanish) "Alarmas de medicación" else "Medication alarms", NotificationManager.IMPORTANCE_HIGH).apply {
             setSound(Settings.System.DEFAULT_NOTIFICATION_URI,
-                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build())
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         })
         val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
         launch.apply {
@@ -63,17 +68,21 @@ class MedicationAlarmReceiver : BroadcastReceiver(), KoinComponent {
             data = Uri.Builder().scheme("mibotiquin").authority("dose").appendPath(eventId).build()
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra(MedicationReminderAlarms.EXTRA_EVENT_ID, eventId)
+            putExtra(MedicationReminderAlarms.EXTRA_SHOW_AS_ALARM, true)
         }
-        val contentIntent = PendingIntent.getActivity(context, 0, launch,
+        val contentIntent = PendingIntent.getActivity(context, eventId.hashCode(), launch,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle(if (spanish) "Recordatorio de medicación" else "Medication reminder")
-            .setContentText(if (spanish) "Abre la app para revisar tu toma pendiente." else "Open the app to review your pending dose.")
+            .setContentTitle(if (spanish) "Es hora de tu medicación" else "Time for your medication")
+            .setContentText(if (spanish) "Toca para revisar tu toma pendiente." else "Tap to review your pending dose.")
             .setContentIntent(contentIntent)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            .setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI).build()
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(contentIntent, true)
+            .setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_MAX)
+            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+            .build()
         manager.notify(eventId, 0, notification)
     }
 }

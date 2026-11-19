@@ -11,6 +11,7 @@ import com.connectapp.domain.model.DoseReminder
 
 internal object MedicationReminderAlarms {
     const val EXTRA_EVENT_ID = "dose_event_id"
+    const val EXTRA_SHOW_AS_ALARM = "show_as_alarm"
     const val ACTION_OPEN_DOSE = "com.connectapp.OPEN_DOSE"
 
     private fun intent(context: Context, eventId: String) = Intent(context, MedicationAlarmReceiver::class.java).apply {
