@@ -3,7 +3,6 @@ package com.connectapp.presentation.component
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -46,11 +45,6 @@ fun CustomBottomBar(
         ),
         BottomNavItem(NavigationRoute.ScanRoute, Icons.Default.QrCodeScanner, nav_scan),
         BottomNavItem(
-            route = NavigationRoute.ProfileRoute(),
-            icon = Icons.Default.Person,
-            label = nav_profile
-        ),
-        BottomNavItem(
             route = NavigationRoute.SettingsRoute,
             icon = Icons.Default.Settings,
             label = nav_settings
@@ -64,11 +58,10 @@ fun CustomBottomBar(
         tonalElevation = Dimen0 // Elevación sutil para separar del contenido
     ) {
         navItems.forEach { item ->
-            // HomeRoute y ProfileRoute llevan el usuario logueado como parámetro, así que no
-            // se pueden comparar por igualdad de valor: se comparan por tipo de ruta.
+            // HomeRoute lleva el usuario logueado como parámetro, así que no se puede comparar
+            // por igualdad de valor: se compara por tipo de ruta.
             val isSelected = when (item.route) {
                 is NavigationRoute.HomeRoute -> currentRoute is NavigationRoute.HomeRoute
-                is NavigationRoute.ProfileRoute -> currentRoute is NavigationRoute.ProfileRoute
                 else -> currentRoute == item.route
             }
             
