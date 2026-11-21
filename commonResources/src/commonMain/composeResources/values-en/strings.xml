@@ -148,6 +148,9 @@
     <string name="dose_confirm">Confirm dose</string>
     <string name="dose_skip">Skip dose</string>
     <string name="dose_snooze">Remind me in 10 minutes</string>
+    <string name="alarm_heading">TIME TO TAKE YOUR MEDICATION</string>
+    <string name="alarm_dose_unavailable">This dose is no longer available.</string>
+    <string name="alarm_close">Close</string>
     <string name="dose_back_home">Back to Home</string>
     <string name="dose_upcoming">Pending and upcoming doses</string>
     <string name="dose_history_title">Dose history</string>

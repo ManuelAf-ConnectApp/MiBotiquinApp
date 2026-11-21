@@ -26,6 +26,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.connectapp.presentation.scan.ScanScreen
 import com.connectapp.presentation.stock.StockScreen
 import com.connectapp.presentation.dose.DoseScreen
+import com.connectapp.presentation.dose.AlarmDoseScreen
 import com.connectapp.presentation.MainViewModel
 import com.connectapp.presentation.component.ScreenTransitionIndicator
 import com.connectapp.presentation.forgot_password.ForgotPasswordScreen
@@ -49,7 +50,7 @@ fun NavigationScreen(
 ) {
     val navState by viewModel.navState.collectAsState()
     val backStack = remember {
-        if (navState.route is NavigationRoute.DoseRoute) mutableStateListOf<Any>(viewModel.authenticatedHomeRoute, navState.route)
+        if (navState.route is NavigationRoute.DoseRoute || navState.route is NavigationRoute.AlarmDoseRoute) mutableStateListOf<Any>(viewModel.authenticatedHomeRoute, navState.route)
         else mutableStateListOf<Any>(navState.route)
     }
 
@@ -64,7 +65,7 @@ fun NavigationScreen(
             ) {
                 backStack.clear()
                 backStack.add(newRoute)
-            } else if (newRoute is NavigationRoute.DoseRoute) {
+            } else if (newRoute is NavigationRoute.DoseRoute || newRoute is NavigationRoute.AlarmDoseRoute) {
                 backStack.clear()
                 backStack.add(viewModel.authenticatedHomeRoute)
                 backStack.add(newRoute)
@@ -196,6 +197,15 @@ fun NavigationScreen(
                         DoseScreen(key.eventId, modifier,
                             onStock = { medicationId -> viewModel.updateNavigationState(NavigationRoute.StockRoute(medicationId, key.eventId)) },
                             onHome = { viewModel.updateNavigationState(viewModel.authenticatedHomeRoute) })
+                    }
+                }
+
+                is NavigationRoute.AlarmDoseRoute -> {
+                    NavEntry(key = key) {
+                        AlarmDoseScreen(
+                            eventId = key.eventId,
+                            onDismiss = { viewModel.updateNavigationState(viewModel.authenticatedHomeRoute) }
+                        )
                     }
                 }
 

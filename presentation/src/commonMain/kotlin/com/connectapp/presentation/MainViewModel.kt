@@ -85,7 +85,10 @@ class MainViewModel(
     private fun openPendingReminder() {
         val request = pendingReminder ?: return
         pendingReminder = null
-        _navState.update { it.copy(route = NavigationRoute.DoseRoute(request.eventId)) }
+        _navState.update {
+            it.copy(route = if (request.showAsAlarm) NavigationRoute.AlarmDoseRoute(request.eventId)
+                else NavigationRoute.DoseRoute(request.eventId))
+        }
         reminderNavigation.consume(request)
     }
 
@@ -106,6 +109,9 @@ class MainViewModel(
 
     fun onBack() {
         when (val route = navState.value.route) {
+            is NavigationRoute.AlarmDoseRoute -> {
+                updateNavigationState(authenticatedHomeRoute)
+            }
             is NavigationRoute.StockRoute -> {
                 updateNavigationState(route.returnToDoseId?.let { NavigationRoute.DoseRoute(it) } ?: authenticatedHomeRoute)
             }

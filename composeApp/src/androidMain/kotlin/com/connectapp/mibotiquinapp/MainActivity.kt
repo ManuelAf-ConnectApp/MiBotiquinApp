@@ -32,8 +32,14 @@ class MainActivity : ComponentActivity() {
     private fun openReminder(intent: Intent?) {
         if (intent?.action != "com.connectapp.OPEN_DOSE") return
         val eventId = intent.getStringExtra("dose_event_id") ?: return
-        reminderNavigation.open(eventId)
+        val showAsAlarm = intent.getBooleanExtra("show_as_alarm", false)
+        if (showAsAlarm) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
+        reminderNavigation.open(eventId, showAsAlarm)
         intent.removeExtra("dose_event_id")
+        intent.removeExtra("show_as_alarm")
     }
 
 

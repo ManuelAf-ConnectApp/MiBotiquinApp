@@ -13,7 +13,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class DoseState(val dose: DoseDetail? = null, val loading: Boolean = true, val error: UiText? = null)
+data class DoseState(
+    val dose: DoseDetail? = null,
+    val loading: Boolean = true,
+    val error: UiText? = null,
+    val snoozed: Boolean = false
+)
 
 class DoseViewModel(private val repository: DoseRepository, private val sync: SyncRemindersUseCase) : ViewModel() {
     private val mutableState = MutableStateFlow(DoseState())
@@ -56,7 +61,7 @@ class DoseViewModel(private val repository: DoseRepository, private val sync: Sy
         job = viewModelScope.launch {
             repository.snoozeDose(dose.eventId, minutes)
                 .onSuccess {
-                    mutableState.value = DoseState(it, false)
+                    mutableState.value = DoseState(it, false, snoozed = true)
                     sync()
                 }
                 .onFailure { error ->

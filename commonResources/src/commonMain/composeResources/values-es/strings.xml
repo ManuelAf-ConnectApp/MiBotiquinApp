@@ -148,6 +148,9 @@
     <string name="dose_confirm">Confirmar toma</string>
     <string name="dose_skip">Omitir toma</string>
     <string name="dose_snooze">Recordar en 10 minutos</string>
+    <string name="alarm_heading">ES HORA DE TOMAR TU MEDICACIÓN</string>
+    <string name="alarm_dose_unavailable">Esta toma ya no está disponible.</string>
+    <string name="alarm_close">Cerrar</string>
     <string name="dose_back_home">Volver a Inicio</string>
     <string name="dose_upcoming">Tomas pendientes y próximas</string>
     <string name="dose_history_title">Historial de tomas</string>

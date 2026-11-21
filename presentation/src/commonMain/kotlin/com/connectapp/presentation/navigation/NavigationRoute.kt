@@ -37,6 +37,10 @@ sealed interface NavigationRoute {
     @Serializable
     data class DoseRoute(val eventId: String) : NavigationRoute
 
+    /** A distraction-free route opened by the operating system at reminder time. */
+    @Serializable
+    data class AlarmDoseRoute(val eventId: String) : NavigationRoute
+
     @Serializable
     data object HistoryRoute : NavigationRoute
 
@@ -46,8 +50,8 @@ sealed interface NavigationRoute {
     @Serializable
     data object ScanRoute : NavigationRoute
 
-    val showBackButton: Boolean get() = this !is HomeRoute
-    val showTopBar: Boolean get() = this !is SplashRoute && this !is LoginRoute
+    val showBackButton: Boolean get() = this !is HomeRoute && this !is AlarmDoseRoute
+    val showTopBar: Boolean get() = this !is SplashRoute && this !is LoginRoute && this !is AlarmDoseRoute
     val showBottomBar: Boolean
-        get() = this !is SplashRoute && this !is LoginRoute && this !is RegisterRoute && this !is ForgotPasswordRoute && this !is MedicationRoute && this !is DoseRoute && this !is StockRoute && this !is HistoryRoute
+        get() = this !is SplashRoute && this !is LoginRoute && this !is RegisterRoute && this !is ForgotPasswordRoute && this !is MedicationRoute && this !is DoseRoute && this !is AlarmDoseRoute && this !is StockRoute && this !is HistoryRoute
 }
