@@ -32,6 +32,7 @@ import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
 
 @Composable
 internal fun MedicationCard(
@@ -39,6 +40,7 @@ internal fun MedicationCard(
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    pendingDosesCount: Int = 0,
     stock: StockSummary? = null
 ) {
     Card(
@@ -83,6 +85,11 @@ internal fun MedicationCard(
                     else stringResource(medication_doses_summary, medication.dosesPerDay.toString(), medication.durationDays.toString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = pluralStringResource(home_pending_doses_count, pendingDosesCount, pendingDosesCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 
                 if (medication.isPaused) Text(stringResource(treatment_paused), color = MaterialTheme.colorScheme.primary)

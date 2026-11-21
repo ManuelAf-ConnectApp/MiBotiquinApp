@@ -96,6 +96,7 @@ val message_not_available = Res.string.message_not_available
 val welcome_back = Res.string.welcome_back
 val welcome_back_generic = Res.string.welcome_back_generic
 val home_medications_count = Res.string.home_medications_count
+val home_pending_doses_count = Res.plurals.home_pending_doses_count
 val default_user_name = Res.string.default_user_name
 val notifications_enabled_message = Res.string.notifications_enabled_message
 val notifications_disabled_message = Res.string.notifications_disabled_message
