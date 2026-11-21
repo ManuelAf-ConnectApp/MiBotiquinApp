@@ -89,6 +89,10 @@
     <string name="welcome_back">¡Bienvenido de nuevo, %1$s!</string>
     <string name="welcome_back_generic">¡Bienvenido de nuevo!</string>
     <string name="home_medications_count">Tus medicaciones (%1$s)</string>
+    <plurals name="home_pending_doses_count">
+        <item quantity="one">%1$d toma pendiente</item>
+        <item quantity="other">%1$d tomas pendientes</item>
+    </plurals>
     <string name="home_empty_medications">No hay medicaciones almacenadas...</string>
     <string name="medication_doses_summary">%1$s dosis al día - Durante %2$s días</string>
     <string name="error_empty_name">El nombre no puede estar vacío</string>

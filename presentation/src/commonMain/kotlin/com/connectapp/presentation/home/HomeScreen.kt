@@ -2,30 +2,21 @@ package com.connectapp.presentation.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.filled.Schedule
 import com.connectapp.presentation.component.BrandIcon
 import com.connectapp.presentation.component.PrimaryActionButton
 import androidx.compose.material3.OutlinedButton
-import com.connectapp.presentation.dose.doseTimeLabel
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,7 +45,6 @@ fun HomeScreen(
     user: User,
     onNavigateToAddMedication: () -> Unit,
     onNavigateToEditMedication: (Medication) -> Unit,
-    onOpenDose: (String) -> Unit,
     onStock: () -> Unit,
     onHistory: () -> Unit,
 ) {
@@ -93,7 +83,6 @@ fun HomeScreen(
             state = state,
             onIntent = onIntent,
             onDeleteClick = { medicationToDelete = it },
-            onOpenDose = onOpenDose,
             onStock = onStock,
             onHistory = onHistory
         )
@@ -129,7 +118,6 @@ private fun HomeScreenContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
     onDeleteClick: (Medication) -> Unit,
-    onOpenDose: (String) -> Unit,
     onStock: () -> Unit,
     onHistory: () -> Unit,
 ) {
@@ -167,24 +155,6 @@ private fun HomeScreenContent(
             }
         }
 
-        if (state.pendingDoses.isNotEmpty()) {
-            item { Text(stringResource(dose_upcoming), style = MaterialTheme.typography.titleMedium) }
-            items(state.pendingDoses, key = { it.eventId }) { dose ->
-                Card(onClick = { onOpenDose(dose.eventId) }, modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), shape = MaterialTheme.shapes.large) {
-                    Row(Modifier.padding(Dimen16), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimen16)) {
-                        Icon(Icons.Default.Schedule, null, tint = MaterialTheme.colorScheme.primary)
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimen4)) {
-                            Text(dose.medicationName, style = MaterialTheme.typography.titleMedium)
-                            Text(doseTimeLabel(dose.scheduledAt), style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-        }
-
         if (state.medications.isEmpty()) {
             item {
                 Box(
@@ -213,6 +183,7 @@ private fun HomeScreenContent(
             items(state.medications) { medication ->
                 MedicationCard(
                     medication = medication,
+                    pendingDosesCount = state.pendingDoses.count { it.medicationId == medication.id },
                     stock = state.stockSummaries.firstOrNull { it.medicationId == medication.id },
                     onClick = { onIntent(HomeIntent.MedicationClicked(medication)) },
                     onDeleteClick = { onDeleteClick(medication) }

@@ -224,7 +224,6 @@ fun NavigationScreen(
                                 },
                                 onStock = { viewModel.updateNavigationState(NavigationRoute.StockRoute()) },
                                 onHistory = { viewModel.updateNavigationState(NavigationRoute.HistoryRoute) },
-                                onOpenDose = { id -> viewModel.updateNavigationState(NavigationRoute.DoseRoute(id)) },
                                 onNavigateToEditMedication = { medication ->
                                     viewModel.updateNavigationState(
                                         NavigationRoute.MedicationRoute(user, medication)
